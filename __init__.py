@@ -20,5 +20,12 @@ from .RPFrameworkIndigoAction       import RPFrameworkIndigoActionDfn
 from .RPFrameworkCommand            import RPFrameworkCommand
 from .RPFrameworkIndigoParam        import RPFrameworkIndigoParamDefn
 from .RPFrameworkDeviceResponse     import RPFrameworkDeviceResponse
+from .RPFrameworkDeviceResponse     import RPFrameworkDeviceResponseEffect
 
 from .RPFrameworkThread             import RPFrameworkThread
+
+from .RPFrameworkPlugin import DEBUGLEVEL_NONE
+from .RPFrameworkPlugin import DEBUGLEVEL_LOW
+from .RPFrameworkPlugin import DEBUGLEVEL_HIGH
+
+from .RPFrameworkPlugin import GUI_CONFIG_PLUGINSETTINGS
