@@ -1,10 +1,8 @@
 #! /usr/bin/env python
 # -*- coding: utf-8 -*-
 #/////////////////////////////////////////////////////////////////////////////////////////
-#/////////////////////////////////////////////////////////////////////////////////////////
 # RPFrameworkNetworkingWOL by RogueProeliator <adam.d.ashe@gmail.com>
 # 	Classes that handles send Wake-On-LAN (WOL) requests over the network
-#/////////////////////////////////////////////////////////////////////////////////////////
 #/////////////////////////////////////////////////////////////////////////////////////////
 
 #/////////////////////////////////////////////////////////////////////////////////////////
@@ -16,10 +14,8 @@ import struct
 #/////////////////////////////////////////////////////////////////////////////////////////
 
 #/////////////////////////////////////////////////////////////////////////////////////////
-#/////////////////////////////////////////////////////////////////////////////////////////
 # sendWakeOnLAN
 #	Module-level function that executes a WOL request to the given MAC address
-#/////////////////////////////////////////////////////////////////////////////////////////
 #/////////////////////////////////////////////////////////////////////////////////////////
 def sendWakeOnLAN(macaddress):
     # Check macaddress format and try to compensate.
@@ -27,19 +23,19 @@ def sendWakeOnLAN(macaddress):
         pass
     elif len(macaddress) == 12 + 5:
         sep = macaddress[2]
-        macaddress = macaddress.replace(sep, '')
+        macaddress = macaddress.replace(sep, "")
     else:
-        raise ValueError(u'Incorrect MAC address format')
+        raise ValueError("Incorrect MAC address format")
  
     # Pad the synchronization stream.
-    data = ''.join(['FFFFFFFFFFFF', macaddress * 20])
+    data = ''.join(["FFFFFFFFFFFF", macaddress * 20])
     send_data = '' 
 
     # Split up the hex values and pack.
     for i in range(0, len(data), 2):
-        send_data = ''.join([send_data, struct.pack('B', int(data[i: i + 2], 16))])
+        send_data = ''.join([send_data, struct.pack("B", int(data[i: i + 2], 16))])
 
     # Broadcast it to the LAN.
     sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     sock.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
-    sock.sendto(send_data, ('<broadcast>', 7))
+    sock.sendto(send_data, ("<broadcast>", 7))

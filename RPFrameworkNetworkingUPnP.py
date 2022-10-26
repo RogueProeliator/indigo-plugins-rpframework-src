@@ -1,11 +1,9 @@
 #! /usr/bin/env python
 # -*- coding: utf-8 -*-
 #/////////////////////////////////////////////////////////////////////////////////////////
-#/////////////////////////////////////////////////////////////////////////////////////////
 # RPFrameworkNetworkingUPnP by RogueProeliator <adam.d.ashe@gmail.com>
 # 	Classes that handle various aspects of Universal Plug and Play protocols such as
 #	discovery of devices.
-#/////////////////////////////////////////////////////////////////////////////////////////
 #/////////////////////////////////////////////////////////////////////////////////////////
 
 #/////////////////////////////////////////////////////////////////////////////////////////
@@ -14,12 +12,8 @@ from __future__ import absolute_import
 import socket
 import sys
 
-if sys.version_info > (3,):
-	import http.client as httplib
-	from io import StringIO
-else:
-	import httplib
-	import StringIO
+import http.client as httplib
+from io import StringIO
 
 from .RPFrameworkUtils import to_unicode
 from .RPFrameworkUtils import to_str
@@ -28,11 +22,9 @@ from .RPFrameworkUtils import to_str
 #/////////////////////////////////////////////////////////////////////////////////////////
 
 #/////////////////////////////////////////////////////////////////////////////////////////
-#/////////////////////////////////////////////////////////////////////////////////////////
 # SSDPResponse
 #	Handles the request (and response) to SSDP queries initiated in order to find Network
 #	devices such as Roku boxes
-#/////////////////////////////////////////////////////////////////////////////////////////
 #/////////////////////////////////////////////////////////////////////////////////////////
 class SSDPResponse(object):
 	######################################################################################
@@ -46,11 +38,11 @@ class SSDPResponse(object):
 		r = httplib.HTTPResponse(self._FakeSocket(response))
 		r.begin()
 		
-		self.location = u''
-		self.usn      = u''
-		self.st       = u''
-		self.server   = u''
-		self.cache    = u''
+		self.location = ""
+		self.usn      = ""
+		self.st       = ""
+		self.server   = ""
+		self.cache    = ""
 		
 		if r.getheader("location") is not None:
 			self.location = to_unicode(r.getheader("location"))
@@ -66,24 +58,22 @@ class SSDPResponse(object):
 		
 		if r.getheader("cache-control") is not None:
 			try:
-				cacheControlHeader = to_unicode(r.getheader("cache-control"))
-				cacheControlHeader = cacheControlHeader.split(u'=')[1]
-				self.cache = cacheControlHeader
+				cache_control_header = to_unicode(r.getheader("cache-control"))
+				cache_control_header = cache_control_header.split("=")[1]
+				self.cache = cache_control_header
 			except:
 				pass
 		
 		self.allHeaders = r.getheaders()
 		
 	def __repr__(self):
-		return u'<SSDPResponse(%(location)s, %(st)s, %(usn)s, %(server)s)>' % (self.__dict__) + to_unicode(self.allHeaders) + u'</SSDPResonse>'
+		return '<SSDPResponse(%(location)s, %(st)s, %(usn)s, %(server)s)>' % self.__dict__ + to_unicode(self.allHeaders) + '</SSDPResonse>'
 
 
-#/////////////////////////////////////////////////////////////////////////////////////////
 #/////////////////////////////////////////////////////////////////////////////////////////
 # uPnPDiscover
 #	Module-level function that executes a uPNP MSEARCH operation to find devices matching
 #	a given service
-#/////////////////////////////////////////////////////////////////////////////////////////
 #/////////////////////////////////////////////////////////////////////////////////////////
 def uPnPDiscover(service, timeout=3, retries=1):
     group = ("239.255.255.250", 1900)

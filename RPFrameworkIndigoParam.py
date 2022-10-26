@@ -1,13 +1,11 @@
 #! /usr/bin/env python
 # -*- coding: utf-8 -*-
 #/////////////////////////////////////////////////////////////////////////////////////////
-#/////////////////////////////////////////////////////////////////////////////////////////
 # RPFrameworkIndigoParamDefn by RogueProeliator <adam.d.ashe@gmail.com>
 # 	This class stores the definition of a parameter coming from Indigo - for an action,
 #	device configuration, plugin configuration, etc. It is used so that the base classes
 #	may automatically handle parameter functions (such as validation) that normally would
 #	have to be written into each plugin
-#/////////////////////////////////////////////////////////////////////////////////////////
 #/////////////////////////////////////////////////////////////////////////////////////////
 
 #/////////////////////////////////////////////////////////////////////////////////////////
@@ -16,17 +14,13 @@ import os
 import re
 import sys
 
-if sys.version_info > (3,):
-	import urllib.request as urlopen
-else:
-	from urllib2 import urlopen
+import urllib.request as urlopen
 
 try:
 	import indigo
 except:
 	pass
 
-from .RPFrameworkUtils import to_unicode
 from .RPFrameworkUtils import to_str
 
 #endregion
@@ -82,24 +76,24 @@ class RPFrameworkIndigoParamDefn(object):
 	#-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 	def isValueValid(self, proposedValue):
 		# if the value is required but empty then error here
-		if proposedValue == None or proposedValue == u'':
+		if proposedValue == None or proposedValue == "":
 			return not self.isRequired
 		
 		# now validate that the type is correct...
 		if self.paramType == RPFrameworkIndigoParamDefn.ParamTypeInteger:
 			try:
-				proposedIntValue = int(proposedValue)
-				if proposedIntValue < self.minValue or proposedIntValue > self.maxValue:
-					raise u'Param value not in range'
+				proposed_int_value = int(proposedValue)
+				if proposed_int_value < self.minValue or proposed_int_value > self.maxValue:
+					raise "Param value not in range"
 				return True
 			except:
 				return False
 				
 		elif self.paramType == RPFrameworkIndigoParamDefn.ParamTypeFloat:
 			try:
-				proposedFltValue = float(proposedValue)
-				if proposedFltValue < self.minValue or proposedFltValue > self.maxValue:
-					raise u'Param value not in range'
+				proposed_flt_value = float(proposedValue)
+				if proposed_flt_value < self.minValue or proposed_flt_value > self.maxValue:
+					raise "Param value not in range"
 				return True
 			except:
 				return False
@@ -108,7 +102,7 @@ class RPFrameworkIndigoParamDefn(object):
 			if type(proposedValue) is bool:
 				return True
 			else:
-				return proposedValue.lower() == u'true'
+				return proposedValue.lower() == "true"
 			
 		elif self.paramType == RPFrameworkIndigoParamDefn.ParamTypeOSDirectoryPath:
 			# validate that the path exists... and that it is a directory
@@ -133,12 +127,12 @@ class RPFrameworkIndigoParamDefn(object):
 		else:
 			# default is a string value... so this will need to check against the
 			# validation expression, if set, and string length
-			if self.validationExpression != u'':
-				if re.search(self.validationExpression, proposedValue, re.I) == None:
+			if self.validationExpression != "":
+				if re.search(self.validationExpression, proposedValue, re.I) is None:
 					return False
 					
-			strLength = len(proposedValue)
-			if strLength < self.minValue or strLength > self.maxValue:
+			str_length = len(proposedValue)
+			if str_length < self.minValue or str_length > self.maxValue:
 				return False
 				
 			# if string processing makes it here then all is good
@@ -155,11 +149,11 @@ class RPFrameworkIndigoParamDefn(object):
 			
 		# separate the IP address into its components... this limits the format for the
 		# user input but is using a fairly standard notation so acceptable
-		addressParts = ip.split(u'.')	
-		if len(addressParts) != 4:
+		address_parts = ip.split(".")
+		if len(address_parts) != 4:
 			return False
 				
-		for part in addressParts:
+		for part in address_parts:
 			try:
 				part = int(part)
 				if part < 0 or part > 255:
