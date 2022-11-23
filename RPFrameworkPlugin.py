@@ -91,7 +91,7 @@ class RPFrameworkPlugin(indigo.PluginBase):
 		self.pluginSupportsUPNPDebug = pluginSupportsUPNP
 
 		# call the base class' initialization to begin setup...
-		super().__init__(self, pluginId, pluginDisplayName, pluginVersion, pluginPrefs)
+		super().__init__(pluginId, pluginDisplayName, pluginVersion, pluginPrefs)
 
 		# set up a custom logging format to make it easier to look through (this applies only to the plugin's
 		# individual file handler
