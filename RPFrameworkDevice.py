@@ -16,10 +16,7 @@ import functools
 import random
 import sys
 import time
-if sys.version_info > (3,):
-	import queue as Queue
-else:
-	import Queue
+import queue as Queue
 
 try:
 	import indigo
@@ -35,11 +32,9 @@ from .RPFrameworkUtils   import to_unicode
 #/////////////////////////////////////////////////////////////////////////////////////////
 
 #/////////////////////////////////////////////////////////////////////////////////////////
-#/////////////////////////////////////////////////////////////////////////////////////////
 # RPFrameworkDevice
 #	Base class for Indigo plugin devices that provides standard functionality such as
-#	multi-threaded communications and attribute management
-#/////////////////////////////////////////////////////////////////////////////////////////
+#	multithreaded communications and attribute management
 #/////////////////////////////////////////////////////////////////////////////////////////
 class RPFrameworkDevice(object):
 	
@@ -88,44 +83,44 @@ class RPFrameworkDevice(object):
 	def initiateCommunications(self, initializeConnect=True):
 		# determine if this device is missing any properties that were added
 		# during device/plugin upgrades
-		propertiesDictUpdateRequired = False
-		pluginPropsCopy = self.indigoDevice.pluginProps
+		properties_dict_update_required = False
+		plugin_props_copy = self.indigoDevice.pluginProps
 		for newPropertyDefn in self.upgradedDeviceProperties:
-			if not (newPropertyDefn[0] in pluginPropsCopy):
-				self.hostPlugin.logger.info(u'Triggering property update due to missing device property: {0}'.format(to_unicode(newPropertyDefn[0])))
-				pluginPropsCopy[newPropertyDefn[0]] = newPropertyDefn[1]
-				propertiesDictUpdateRequired        = True
+			if not (newPropertyDefn[0] in plugin_props_copy):
+				self.hostPlugin.logger.info(f"Triggering property update due to missing device property: {newPropertyDefn[0]}")
+				plugin_props_copy[newPropertyDefn[0]]  = newPropertyDefn[1]
+				properties_dict_update_required        = True
 				
 				# safeguard in case the device doesn't get updated...
 				self.indigoDevice.pluginProps[newPropertyDefn[0]] = newPropertyDefn[1]
 
-		if propertiesDictUpdateRequired == True:
-			self.indigoDevice.replacePluginPropsOnServer(pluginPropsCopy)
+		if properties_dict_update_required:
+			self.indigoDevice.replacePluginPropsOnServer(plugin_props_copy)
 	
 		# determine if this device is missing any states that were defined in upgrades
-		stateReloadRequired = False
+		state_reload_required = False
 		for newStateName in self.upgradedDeviceStates:
 			if not (newStateName in self.indigoDevice.states):
-				self.hostPlugin.logger.info(u'Triggering state reload due to missing device state: {0}'.format(to_unicode(newStateName)))
-				stateReloadRequired = True	
-		if stateReloadRequired == True:
+				self.hostPlugin.logger.info(f"Triggering state reload due to missing device state: {newStateName}")
+				state_reload_required = True
+		if state_reload_required:
 			self.indigoDevice.stateListOrDisplayStateIdChanged()
 		
 		# start concurrent processing thread by injecting a placeholder
 		# command to the queue
-		if initializeConnect == True:
+		if initializeConnect:
 			self.queueDeviceCommand(RPFrameworkCommand(RPFrameworkCommand.CMD_INITIALIZE_CONNECTION))
 
 	#-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 	# This routine will shut down communications with the hardware device
 	#-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 	def terminateCommunications(self):
-		self.hostPlugin.logger.debug(u'Initiating shutdown of communications with {0}'.format(self.indigoDevice.name))
-		if not (self.concurrentThread is None) and self.concurrentThread.isAlive() == True:
+		self.hostPlugin.logger.debug(f"Initiating shutdown of communications with {self.indigoDevice.name}")
+		if not (self.concurrentThread is None) and self.concurrentThread.isAlive():
 			self.concurrentThread.terminateThread()
 			self.concurrentThread.join()
 		self.concurrentThread = None
-		self.hostPlugin.logger.debug(u'Shutdown of communications with {0} complete'.format(self.indigoDevice.name))
+		self.hostPlugin.logger.debug(f"Shutdown of communications with {self.indigoDevice.name} complete")
 	
 	#endregion
 	#/////////////////////////////////////////////////////////////////////////////////////
@@ -149,8 +144,8 @@ class RPFrameworkDevice(object):
 	# Add new commands to queue as a list, ensuring that they are executed in-order
 	#-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 	def queueDeviceCommands(self, commandList):
-		for rpCmd in commandList:
-			self.queueDeviceCommand(rpCmd)
+		for rp_cmd in commandList:
+			self.queueDeviceCommand(rp_cmd)
 			
 	#-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 	# This routine is designed to run in a concurrent thread and will continuously monitor
@@ -165,26 +160,26 @@ class RPFrameworkDevice(object):
 	# the GUI Configuration
 	#-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 	def scheduleReconnectionAttempt(self):
-		self.hostPlugin.logger.debug(u'Scheduling reconnection attempt...')
+		self.hostPlugin.logger.debug("Scheduling reconnection attempt...")
 		try:
 			self.failedConnectionAttempts = self.failedConnectionAttempts + 1
-			maxReconnectAttempts = int(self.hostPlugin.getGUIConfigValue(self.indigoDevice.deviceTypeId, RPFrameworkPlugin.GUI_CONFIG_RECONNECTIONATTEMPT_LIMIT, u'0'))
-			if self.failedConnectionAttempts > maxReconnectAttempts:
-				self.hostPlugin.logger.debug(u'Maximum reconnection attempts reached (or not allowed) for device {0}'.format(self.indigoDevice.id))
+			max_reconnect_attempts = int(self.hostPlugin.getGUIConfigValue(self.indigoDevice.deviceTypeId, RPFrameworkPlugin.GUI_CONFIG_RECONNECTIONATTEMPT_LIMIT, "0"))
+			if self.failedConnectionAttempts > max_reconnect_attempts:
+				self.hostPlugin.logger.debug(f"Maximum reconnection attempts reached (or not allowed) for device {self.indigoDevice.id}")
 			else:
-				reconnectAttemptDelay = int(self.hostPlugin.getGUIConfigValue(self.indigoDevice.deviceTypeId, RPFrameworkPlugin.GUI_CONFIG_RECONNECTIONATTEMPT_DELAY, u'60'))
-				reconnectAttemptScheme = self.hostPlugin.getGUIConfigValue(self.indigoDevice.deviceTypeId, RPFrameworkPlugin.GUI_CONFIG_RECONNECTIONATTEMPT_SCHEME, RPFrameworkPlugin.GUI_CONFIG_RECONNECTIONATTEMPT_SCHEME_REGRESS)
+				reconnect_attempt_delay  = int(self.hostPlugin.getGUIConfigValue(self.indigoDevice.deviceTypeId, RPFrameworkPlugin.GUI_CONFIG_RECONNECTIONATTEMPT_DELAY, "60"))
+				reconnect_attempt_scheme = self.hostPlugin.getGUIConfigValue(self.indigoDevice.deviceTypeId, RPFrameworkPlugin.GUI_CONFIG_RECONNECTIONATTEMPT_SCHEME, RPFrameworkPlugin.GUI_CONFIG_RECONNECTIONATTEMPT_SCHEME_REGRESS)
 			
-				if reconnectAttemptScheme == RPFrameworkPlugin.GUI_CONFIG_RECONNECTIONATTEMPT_SCHEME_FIXED:
-					reconnectSeconds = reconnectAttemptDelay
+				if reconnect_attempt_scheme == RPFrameworkPlugin.GUI_CONFIG_RECONNECTIONATTEMPT_SCHEME_FIXED:
+					reconnect_seconds = reconnect_attempt_delay
 				else:
-					reconnectSeconds = reconnectAttemptDelay * self.failedConnectionAttempts
-				reconnectAttemptTime = time.time() + reconnectSeconds
+					reconnect_seconds = reconnect_attempt_delay * self.failedConnectionAttempts
+				reconnect_attempt_time = time.time() + reconnect_seconds
 
-				self.hostPlugin.pluginCommandQueue.put(RPFrameworkCommand.RPFrameworkCommand(RPFrameworkCommand.CMD_DEVICE_RECONNECT, commandPayload=(self.indigoDevice.id, self.deviceInstanceIdentifier, reconnectAttemptTime)))
-				self.hostPlugin.logger.debug(u'Reconnection attempt scheduled for {0} seconds'.format(reconnectSeconds))
+				self.hostPlugin.pluginCommandQueue.put(RPFrameworkCommand.RPFrameworkCommand(RPFrameworkCommand.CMD_DEVICE_RECONNECT, commandPayload=(self.indigoDevice.id, self.deviceInstanceIdentifier, reconnect_attempt_time)))
+				self.hostPlugin.logger.debug(f"Reconnection attempt scheduled for {reconnect_seconds} seconds")
 		except:
-			self.hostPlugin.logger.error(u'Failed to schedule reconnection attempt to device')			
+			self.hostPlugin.logger.error("Failed to schedule reconnection attempt to device")
 	
 	#endregion
 	#/////////////////////////////////////////////////////////////////////////////////////
@@ -197,37 +192,37 @@ class RPFrameworkDevice(object):
 	def getChildDeviceKeyByDevice(self, device):
 		# the key into the dictionary will be specified by the GUI configuration variable
 		# of THIS (parent) device... by default it will just be the child device's ID
-		childDeviceKey = self.hostPlugin.substituteIndigoValues(self.hostPlugin.getGUIConfigValue(self.indigoDevice.deviceTypeId, RPFrameworkPlugin.GUI_CONFIG_CHILDDICTIONARYKEYFORMAT, u''), device, None)
-		if childDeviceKey == u'':
-			childDeviceKey = to_unicode(device.indigoDevice.id)
-		return childDeviceKey
+		child_device_key = self.hostPlugin.substituteIndigoValues(self.hostPlugin.getGUIConfigValue(self.indigoDevice.deviceTypeId, RPFrameworkPlugin.GUI_CONFIG_CHILDDICTIONARYKEYFORMAT, ""), device, None)
+		if child_device_key == "":
+			child_device_key = to_unicode(device.indigoDevice.id)
+		return child_device_key
 	
 	#-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 	# This routine will add a new child device to the device; the parameter will be of
 	# RPFrameworkDevice descendant
 	#-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 	def addChildDevice(self, device):
-		self.hostPlugin.logger.threaddebug(u'Adding child device {0} to {1}'.format(device.indigoDevice.id, self.indigoDevice.id))
+		self.hostPlugin.logger.threaddebug(f"Adding child device {device.indigoDevice.id} to {self.indigoDevice.id}")
 		
 		# the key into the dictionary will be specified by the GUI configuration variable
-		childDeviceKey = self.getChildDeviceKeyByDevice(device)
-		self.hostPlugin.logger.threaddebug(u'Created device key: {0}'.format(childDeviceKey))
+		child_device_key = self.getChildDeviceKeyByDevice(device)
+		self.hostPlugin.logger.threaddebug(f"Created device key: {child_device_key}")
 			
 		# add the device to the list of those managed by this device...
-		self.childDevices[childDeviceKey] = device
+		self.childDevices[child_device_key] = device
 		
 	#-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 	# This routine will remove a child device from the list of managed devices; note that
 	# the plugin continues to handle all device lifecycle calls!
 	#-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 	def removeChildDevice(self, device):
-		self.hostPlugin.logger.threaddebug(u'Removing child device {0} from {1}'.format(device.indigoDevice.id, self.indigoDevice.id))
+		self.hostPlugin.logger.threaddebug(f"Removing child device {device.indigoDevice.id} from {self.indigoDevice.id}")
 		
 		# the key into the dictionary will be specified by the GUI configuration variable
-		childDeviceKey = self.getChildDeviceKeyByDevice(device)
+		child_device_key = self.getChildDeviceKeyByDevice(device)
 		
 		# remove the device...
-		del self.childDevices[childDeviceKey]
+		del self.childDevices[child_device_key]
 
 	#endregion
 	#/////////////////////////////////////////////////////////////////////////////////////	
@@ -246,8 +241,8 @@ class RPFrameworkDevice(object):
 	# device states
 	#-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 	def updateStatesForDevice(self, statesToUpdate):
-		for updateValue in statesToUpdate:
-			self.indigoDevice.states[updateValue["key"]] = updateValue["value"]
+		for update_value in statesToUpdate:
+			self.indigoDevice.states[update_value["key"]] = update_value["value"]
 		self.indigoDevice.updateStatesOnServer(statesToUpdate)
 	
 	#endregion
