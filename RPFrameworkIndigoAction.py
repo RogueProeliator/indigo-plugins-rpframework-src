@@ -122,13 +122,13 @@ class RPFrameworkIndigoActionDfn(object):
 			# from firing...
 			if executeCondition is not None and executeCondition != "":
 				# this should eval to a boolean value
-				if not eval(rpPlugin.substituteIndigoValues(executeCondition, rpDevice, resolved_values)):
+				if not eval(rpPlugin.substitute_indigo_values(executeCondition, rpDevice, resolved_values)):
 					rpPlugin.logger.threaddebug(f"Execute condition failed, skipping execution for command: {commandName}")
 					continue
 		
 			# determine the number of times to execute this command (supports sending the same request
 			# multiple times in a row)
-			execute_times_str = rpPlugin.substituteIndigoValues(commandExecuteCount, rpDevice, resolved_values)
+			execute_times_str = rpPlugin.substitute_indigo_values(commandExecuteCount, rpDevice, resolved_values)
 			if execute_times_str.startswith(u'eval:'):
 				execute_times_str = eval(execute_times_str.replace("eval:", ""))
 			if execute_times_str is None or execute_times_str == "":
@@ -138,12 +138,12 @@ class RPFrameworkIndigoActionDfn(object):
 			# create a new command for each of the count requested...
 			for i in range(0, execute_times):
 				# create the payload based upon the format string provided for the command
-				payload = rpPlugin.substituteIndigoValues(commandFormatString, rpDevice, resolved_values)
+				payload = rpPlugin.substitute_indigo_values(commandFormatString, rpDevice, resolved_values)
 				if payload.startswith("eval:"):
 					payload = eval(payload.replace("eval:", ""))
 				
 				# determine the delay that should be added after the command (delay between repeats)
-				delay_time_str = rpPlugin.substituteIndigoValues(repeatCommandDelay, rpDevice, resolved_values)
+				delay_time_str = rpPlugin.substitute_indigo_values(repeatCommandDelay, rpDevice, resolved_values)
 				delay_time = 0.0
 				if execute_times > 1 and delay_time_str != "":
 					delay_time = float(delay_time_str)
