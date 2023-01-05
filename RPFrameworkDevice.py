@@ -176,7 +176,7 @@ class RPFrameworkDevice(object):
 					reconnect_seconds = reconnect_attempt_delay * self.failedConnectionAttempts
 				reconnect_attempt_time = time.time() + reconnect_seconds
 
-				self.hostPlugin.pluginCommandQueue.put(RPFrameworkCommand.RPFrameworkCommand(RPFrameworkCommand.CMD_DEVICE_RECONNECT, commandPayload=(self.indigoDevice.id, self.deviceInstanceIdentifier, reconnect_attempt_time)))
+				self.hostPlugin.plugin_command_queue.put(RPFrameworkCommand.RPFrameworkCommand(RPFrameworkCommand.CMD_DEVICE_RECONNECT, commandPayload=(self.indigoDevice.id, self.deviceInstanceIdentifier, reconnect_attempt_time)))
 				self.hostPlugin.logger.debug(f"Reconnection attempt scheduled for {reconnect_seconds} seconds")
 		except:
 			self.hostPlugin.logger.error("Failed to schedule reconnection attempt to device")
