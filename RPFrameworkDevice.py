@@ -53,7 +53,7 @@ class RPFrameworkDevice(object):
 
 		self.commandQueue              = Queue.Queue()
 		self.concurrentThread          = None
-		self.failedConnectionAttempts  = 0
+		self.failed_connection_attempts  = 0
 		self.emptyQueueThreadSleepTime = 0.1
 		
 		self.upgradedDeviceStates      = list()
@@ -162,9 +162,9 @@ class RPFrameworkDevice(object):
 	def scheduleReconnectionAttempt(self):
 		self.hostPlugin.logger.debug("Scheduling reconnection attempt...")
 		try:
-			self.failedConnectionAttempts = self.failedConnectionAttempts + 1
+			self.failed_connection_attempts = self.failed_connection_attempts + 1
 			max_reconnect_attempts = int(self.hostPlugin.get_gui_config_value(self.indigoDevice.deviceTypeId, RPFrameworkPlugin.GUI_CONFIG_RECONNECTIONATTEMPT_LIMIT, "0"))
-			if self.failedConnectionAttempts > max_reconnect_attempts:
+			if self.failed_connection_attempts > max_reconnect_attempts:
 				self.hostPlugin.logger.debug(f"Maximum reconnection attempts reached (or not allowed) for device {self.indigoDevice.id}")
 			else:
 				reconnect_attempt_delay  = int(self.hostPlugin.get_gui_config_value(self.indigoDevice.deviceTypeId, RPFrameworkPlugin.GUI_CONFIG_RECONNECTIONATTEMPT_DELAY, "60"))
@@ -173,7 +173,7 @@ class RPFrameworkDevice(object):
 				if reconnect_attempt_scheme == RPFrameworkPlugin.GUI_CONFIG_RECONNECTIONATTEMPT_SCHEME_FIXED:
 					reconnect_seconds = reconnect_attempt_delay
 				else:
-					reconnect_seconds = reconnect_attempt_delay * self.failedConnectionAttempts
+					reconnect_seconds = reconnect_attempt_delay * self.failed_connection_attempts
 				reconnect_attempt_time = time.time() + reconnect_seconds
 
 				self.hostPlugin.plugin_command_queue.put(RPFrameworkCommand.RPFrameworkCommand(RPFrameworkCommand.CMD_DEVICE_RECONNECT, commandPayload=(self.indigoDevice.id, self.deviceInstanceIdentifier, reconnect_attempt_time)))
