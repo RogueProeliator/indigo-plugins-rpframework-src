@@ -53,7 +53,7 @@ class RPFrameworkDevice(object):
 
 		self.commandQueue              = Queue.Queue()
 		self.concurrentThread          = None
-		self.failedConnectionAttempts  = 0
+		self.failed_connection_attempts  = 0
 		self.emptyQueueThreadSleepTime = 0.1
 		
 		self.upgradedDeviceStates      = list()
@@ -162,21 +162,21 @@ class RPFrameworkDevice(object):
 	def scheduleReconnectionAttempt(self):
 		self.hostPlugin.logger.debug("Scheduling reconnection attempt...")
 		try:
-			self.failedConnectionAttempts = self.failedConnectionAttempts + 1
-			max_reconnect_attempts = int(self.hostPlugin.getGUIConfigValue(self.indigoDevice.deviceTypeId, RPFrameworkPlugin.GUI_CONFIG_RECONNECTIONATTEMPT_LIMIT, "0"))
-			if self.failedConnectionAttempts > max_reconnect_attempts:
+			self.failed_connection_attempts = self.failed_connection_attempts + 1
+			max_reconnect_attempts = int(self.hostPlugin.get_gui_config_value(self.indigoDevice.deviceTypeId, RPFrameworkPlugin.GUI_CONFIG_RECONNECTIONATTEMPT_LIMIT, "0"))
+			if self.failed_connection_attempts > max_reconnect_attempts:
 				self.hostPlugin.logger.debug(f"Maximum reconnection attempts reached (or not allowed) for device {self.indigoDevice.id}")
 			else:
-				reconnect_attempt_delay  = int(self.hostPlugin.getGUIConfigValue(self.indigoDevice.deviceTypeId, RPFrameworkPlugin.GUI_CONFIG_RECONNECTIONATTEMPT_DELAY, "60"))
-				reconnect_attempt_scheme = self.hostPlugin.getGUIConfigValue(self.indigoDevice.deviceTypeId, RPFrameworkPlugin.GUI_CONFIG_RECONNECTIONATTEMPT_SCHEME, RPFrameworkPlugin.GUI_CONFIG_RECONNECTIONATTEMPT_SCHEME_REGRESS)
+				reconnect_attempt_delay  = int(self.hostPlugin.get_gui_config_value(self.indigoDevice.deviceTypeId, RPFrameworkPlugin.GUI_CONFIG_RECONNECTIONATTEMPT_DELAY, "60"))
+				reconnect_attempt_scheme = self.hostPlugin.get_gui_config_value(self.indigoDevice.deviceTypeId, RPFrameworkPlugin.GUI_CONFIG_RECONNECTIONATTEMPT_SCHEME, RPFrameworkPlugin.GUI_CONFIG_RECONNECTIONATTEMPT_SCHEME_REGRESS)
 			
 				if reconnect_attempt_scheme == RPFrameworkPlugin.GUI_CONFIG_RECONNECTIONATTEMPT_SCHEME_FIXED:
 					reconnect_seconds = reconnect_attempt_delay
 				else:
-					reconnect_seconds = reconnect_attempt_delay * self.failedConnectionAttempts
+					reconnect_seconds = reconnect_attempt_delay * self.failed_connection_attempts
 				reconnect_attempt_time = time.time() + reconnect_seconds
 
-				self.hostPlugin.pluginCommandQueue.put(RPFrameworkCommand.RPFrameworkCommand(RPFrameworkCommand.CMD_DEVICE_RECONNECT, commandPayload=(self.indigoDevice.id, self.deviceInstanceIdentifier, reconnect_attempt_time)))
+				self.hostPlugin.plugin_command_queue.put(RPFrameworkCommand.RPFrameworkCommand(RPFrameworkCommand.CMD_DEVICE_RECONNECT, commandPayload=(self.indigoDevice.id, self.deviceInstanceIdentifier, reconnect_attempt_time)))
 				self.hostPlugin.logger.debug(f"Reconnection attempt scheduled for {reconnect_seconds} seconds")
 		except:
 			self.hostPlugin.logger.error("Failed to schedule reconnection attempt to device")
@@ -192,7 +192,7 @@ class RPFrameworkDevice(object):
 	def getChildDeviceKeyByDevice(self, device):
 		# the key into the dictionary will be specified by the GUI configuration variable
 		# of THIS (parent) device... by default it will just be the child device's ID
-		child_device_key = self.hostPlugin.substituteIndigoValues(self.hostPlugin.getGUIConfigValue(self.indigoDevice.deviceTypeId, RPFrameworkPlugin.GUI_CONFIG_CHILDDICTIONARYKEYFORMAT, ""), device, None)
+		child_device_key = self.hostPlugin.substitute_indigo_values(self.hostPlugin.get_gui_config_value(self.indigoDevice.deviceTypeId, RPFrameworkPlugin.GUI_CONFIG_CHILDDICTIONARYKEYFORMAT, ""), device, None)
 		if child_device_key == "":
 			child_device_key = to_unicode(device.indigoDevice.id)
 		return child_device_key

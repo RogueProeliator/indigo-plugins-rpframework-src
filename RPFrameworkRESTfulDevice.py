@@ -85,11 +85,11 @@ class RPFrameworkRESTfulDevice(RPFrameworkDevice):
 			
 			# retrieve any configuration information that may have been set up in the
 			# plugin configuration and/or device configuration
-			update_status_poller_property_name = self.hostPlugin.getGUIConfigValue(self.indigoDevice.deviceTypeId, RPFrameworkRESTfulDevice.GUI_CONFIG_RESTFULSTATUSPOLL_INTERVALPROPERTY, "updateInterval")
+			update_status_poller_property_name = self.hostPlugin.get_gui_config_value(self.indigoDevice.deviceTypeId, RPFrameworkRESTfulDevice.GUI_CONFIG_RESTFULSTATUSPOLL_INTERVALPROPERTY, "updateInterval")
 			update_status_poller_interval      = int(self.indigoDevice.pluginProps.get(update_status_poller_property_name, "90"))
 			update_status_poller_next_run      = None
-			update_status_poller_action_id     = self.hostPlugin.getGUIConfigValue(self.indigoDevice.deviceTypeId, RPFrameworkRESTfulDevice.GUI_CONFIG_RESTFULSTATUSPOLL_ACTIONID, "")
-			empty_queue_reduced_wait_cycles    = int(self.hostPlugin.getGUIConfigValue(self.indigoDevice.deviceTypeId, RPFrameworkRESTfulDevice.GUI_CONFIG_RESTFULDEV_EMPTYQUEUE_SPEEDUPCYCLES, "80"))
+			update_status_poller_action_id     = self.hostPlugin.get_gui_config_value(self.indigoDevice.deviceTypeId, RPFrameworkRESTfulDevice.GUI_CONFIG_RESTFULSTATUSPOLL_ACTIONID, "")
+			empty_queue_reduced_wait_cycles    = int(self.hostPlugin.get_gui_config_value(self.indigoDevice.deviceTypeId, RPFrameworkRESTfulDevice.GUI_CONFIG_RESTFULDEV_EMPTYQUEUE_SPEEDUPCYCLES, "80"))
 			
 			# begin the infinite loop which will run as long as the queue contains commands
 			# and we have not received an explicit shutdown request
@@ -112,7 +112,7 @@ class RPFrameworkRESTfulDevice(RPFrameworkDevice):
 						
 						# if the device supports polling for status, it may be initiated here now; however, we should implement a pause to ensure that
 						# devices are created properly (RESTFul devices may respond too fast since no connection need be established)
-						status_update_startup_delay = float(self.hostPlugin.getGUIConfigValue(self.indigoDevice.deviceTypeId, RPFrameworkRESTfulDevice.GUI_CONFIG_RESTFULSTATUSPOLL_STARTUPDELAY, "3"))
+						status_update_startup_delay = float(self.hostPlugin.get_gui_config_value(self.indigoDevice.deviceTypeId, RPFrameworkRESTfulDevice.GUI_CONFIG_RESTFULSTATUSPOLL_STARTUPDELAY, "3"))
 						if status_update_startup_delay > 0.0:
 							commandQueue.put(RPFrameworkCommand.RPFrameworkCommand(RPFrameworkCommand.CMD_PAUSE_PROCESSING, commandPayload=str(status_update_startup_delay)))
 						commandQueue.put(RPFrameworkCommand.RPFrameworkCommand(RPFrameworkCommand.CMD_UPDATE_DEVICE_STATUS_FULL, parentAction=update_status_poller_action_id))
@@ -137,7 +137,7 @@ class RPFrameworkRESTfulDevice(RPFrameworkDevice):
 						# that may be read from the device should be read)
 						if update_status_poller_action_id != "":
 							self.hostPlugin.logger.debug("Executing full status update request...")
-							self.hostPlugin.executeAction(None, indigoActionId=update_status_poller_action_id, indigoDeviceId=self.indigoDevice.id, paramValues=None)
+							self.hostPlugin.execute_action(None, indigoActionId=update_status_poller_action_id, indigoDeviceId=self.indigoDevice.id, paramValues=None)
 							update_status_poller_next_run = time.time() + update_status_poller_interval
 						else:
 							self.hostPlugin.logger.threaddebug("Ignoring status update request, no action specified to update device status")
@@ -383,7 +383,7 @@ class RPFrameworkRESTfulDevice(RPFrameworkDevice):
 		# loop through the list of response definitions defined in the (base) class
 		# and determine if any match
 		responseText = responseObj.text
-		for rpResponse in self.hostPlugin.getDeviceResponseDefinitions(self.indigoDevice.deviceTypeId):
+		for rpResponse in self.hostPlugin.get_device_response_definitions(self.indigoDevice.deviceTypeId):
 			if rpResponse.isResponseMatch(responseText, rpCommand, self, self.hostPlugin):
 				self.hostPlugin.logger.threaddebug(f"Found response match: {rpResponse.responseId}")
 				rpResponse.executeEffects(responseText, rpCommand, self, self.hostPlugin)

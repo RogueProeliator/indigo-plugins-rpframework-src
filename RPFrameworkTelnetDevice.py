@@ -72,9 +72,9 @@ class RPFrameworkTelnetDevice(RPFrameworkDevice):
 	# Constructor called once upon plugin class receiving a command to start device
 	# communication. Defers to the base class for processing but initializes params
 	#-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-	def __init__(self, plugin, device, connectionType=CONNECTIONTYPE_TELNET):
+	def __init__(self, plugin, device, connection_type=CONNECTIONTYPE_TELNET):
 		super().__init__(plugin, device)
-		self.connectionType = connectionType
+		self.connection_type = connection_type
 
 	#endregion
 	#/////////////////////////////////////////////////////////////////////////////////////
@@ -89,16 +89,16 @@ class RPFrameworkTelnetDevice(RPFrameworkDevice):
 		try:
 			# retrieve the keys and settings that will be used during the command processing
 			# for this telnet device
-			is_connected_state_key = self.hostPlugin.getGUIConfigValue(self.indigoDevice.deviceTypeId, RPFrameworkTelnetDevice.GUI_CONFIG_ISCONNECTEDSTATEKEY, "")
-			connection_state_key   = self.hostPlugin.getGUIConfigValue(self.indigoDevice.deviceTypeId, RPFrameworkTelnetDevice.GUI_CONFIG_CONNECTIONSTATEKEY, "")
+			is_connected_state_key = self.hostPlugin.get_gui_config_value(self.indigoDevice.deviceTypeId, RPFrameworkTelnetDevice.GUI_CONFIG_ISCONNECTEDSTATEKEY, "")
+			connection_state_key   = self.hostPlugin.get_gui_config_value(self.indigoDevice.deviceTypeId, RPFrameworkTelnetDevice.GUI_CONFIG_CONNECTIONSTATEKEY, "")
 			self.hostPlugin.logger.threaddebug(f"Read device state config... isConnected: {is_connected_state_key}; connectionState: {connection_state_key}")
 			telnet_connection_info = self.getDeviceAddressInfo()
 		
 			# establish the telnet connection to the telnet-based which handles the primary
 			# network remote operations
 			self.hostPlugin.logger.debug(f"Establishing connection to {telnet_connection_info[0]}")
-			ip_connection                 = self.establishDeviceConnection(telnet_connection_info)
-			self.failedConnectionAttempts = 0
+			ip_connection                   = self.establishDeviceConnection(telnet_connection_info)
+			self.failed_connection_attempts = 0
 			self.hostPlugin.logger.debug(f"Connection established")
 			
 			# update the states on the server to show that we have established a connectionStateKey
@@ -108,21 +108,21 @@ class RPFrameworkTelnetDevice(RPFrameworkDevice):
 			if connection_state_key != "":
 				self.indigoDevice.updateStateOnServer(key=connection_state_key, value="Connected")
 				
-			# retrieve any configuration information that may have been setup in the
+			# retrieve any configuration information that may have been set up in the
 			# plugin configuration and/or device configuration	
-			line_ending_token                 = self.hostPlugin.getGUIConfigValue(self.indigoDevice.deviceTypeId, RPFrameworkTelnetDevice.GUI_CONFIG_EOL, "\r")
-			line_encoding                     = self.hostPlugin.getGUIConfigValue(self.indigoDevice.deviceTypeId, RPFrameworkTelnetDevice.GUI_CONFIG_SENDENCODING, "ascii")
-			command_response_timeout          = float(self.hostPlugin.getGUIConfigValue(self.indigoDevice.deviceTypeId, RPFrameworkTelnetDevice.GUI_CONFIG_COMMANDREADTIMEOUT, "0.5"))
+			line_ending_token                 = self.hostPlugin.get_gui_config_value(self.indigoDevice.deviceTypeId, RPFrameworkTelnetDevice.GUI_CONFIG_EOL, "\r")
+			line_encoding                     = self.hostPlugin.get_gui_config_value(self.indigoDevice.deviceTypeId, RPFrameworkTelnetDevice.GUI_CONFIG_SENDENCODING, "ascii")
+			command_response_timeout          = float(self.hostPlugin.get_gui_config_value(self.indigoDevice.deviceTypeId, RPFrameworkTelnetDevice.GUI_CONFIG_COMMANDREADTIMEOUT, "0.5"))
 			
-			telnet_connection_requires_login_dp = self.hostPlugin.getGUIConfigValue(self.indigoDevice.deviceTypeId, RPFrameworkTelnetDevice.GUI_CONFIG_REQUIRES_LOGIN_DP, "")
+			telnet_connection_requires_login_dp = self.hostPlugin.get_gui_config_value(self.indigoDevice.deviceTypeId, RPFrameworkTelnetDevice.GUI_CONFIG_REQUIRES_LOGIN_DP, "")
 			telnet_connection_requires_login    = (to_unicode(self.indigoDevice.pluginProps.get(telnet_connection_requires_login_dp, "False")).lower() == "true")
 			
-			update_status_poller_property_name  = self.hostPlugin.getGUIConfigValue(self.indigoDevice.deviceTypeId, RPFrameworkTelnetDevice.GUI_CONFIG_STATUSPOLL_INTERVALPROPERTY, "updateInterval")
+			update_status_poller_property_name  = self.hostPlugin.get_gui_config_value(self.indigoDevice.deviceTypeId, RPFrameworkTelnetDevice.GUI_CONFIG_STATUSPOLL_INTERVALPROPERTY, "updateInterval")
 			update_status_poller_interval       = int(self.indigoDevice.pluginProps.get(update_status_poller_property_name, "90"))
 			update_status_poller_next_run       = None
-			update_status_poller_action_id      = self.hostPlugin.getGUIConfigValue(self.indigoDevice.deviceTypeId, RPFrameworkTelnetDevice.GUI_CONFIG_STATUSPOLL_ACTIONID, "")
+			update_status_poller_action_id      = self.hostPlugin.get_gui_config_value(self.indigoDevice.deviceTypeId, RPFrameworkTelnetDevice.GUI_CONFIG_STATUSPOLL_ACTIONID, "")
 			
-			empty_queue_reduced_wait_cycles     = int(self.hostPlugin.getGUIConfigValue(self.indigoDevice.deviceTypeId, RPFrameworkTelnetDevice.GUI_CONFIG_TELNETDEV_EMPTYQUEUE_SPEEDUPCYCLES, "200"))
+			empty_queue_reduced_wait_cycles     = int(self.hostPlugin.get_gui_config_value(self.indigoDevice.deviceTypeId, RPFrameworkTelnetDevice.GUI_CONFIG_TELNETDEV_EMPTYQUEUE_SPEEDUPCYCLES, "200"))
 			
 			# begin the infinite loop which will run as long as the queue contains commands
 			# and we have not received an explicit shutdown request
@@ -141,12 +141,12 @@ class RPFrameworkTelnetDevice(RPFrameworkDevice):
 					if command.commandName == RPFrameworkCommand.CMD_INITIALIZE_CONNECTION:
 						# specialized command to instantiate the thread/telnet connection
 						# safely ignore this... just used to spin up the thread
-						self.hostPlugin.logger.threaddebug(u'Create connection command de-queued')
+						self.hostPlugin.logger.threaddebug("Create connection command de-queued")
 						
 						# if the device supports polling for status, it may be initiated here now that
 						# the connection has been established; no additional command will come through
 						if not telnet_connection_requires_login:
-							commandQueue.put(RPFrameworkCommand.RPFrameworkCommand(RPFrameworkCommand.CMD_UPDATE_DEVICE_STATUS_FULL, parentAction=update_status_poller_action_id))
+							commandQueue.put(RPFrameworkCommand(RPFrameworkCommand.CMD_UPDATE_DEVICE_STATUS_FULL, parentAction=update_status_poller_action_id))
 						
 					elif command.commandName == RPFrameworkCommand.CMD_TERMINATE_PROCESSING_THREAD:
 						# a specialized command designed to stop the processing thread indigo
@@ -168,7 +168,7 @@ class RPFrameworkTelnetDevice(RPFrameworkDevice):
 						# that may be read from the device should be read)
 						if update_status_poller_action_id != "":
 							self.hostPlugin.logger.debug("Executing full status update request...")
-							self.hostPlugin.executeAction(None, indigoActionId=update_status_poller_action_id, indigoDeviceId=self.indigoDevice.id, paramValues=None)
+							self.hostPlugin.execute_action(None, indigoActionId=update_status_poller_action_id, indigoDeviceId=self.indigoDevice.id, paramValues=None)
 							if update_status_poller_interval > 0:
 								update_status_poller_next_run = time.time() + update_status_poller_interval
 						else:
@@ -203,7 +203,7 @@ class RPFrameworkTelnetDevice(RPFrameworkDevice):
 						self.handleUnmanagedCommandInQueue(ip_connection, command)
 						
 					# determine if any response has been received from the telnet device...
-					response_text = to_unicode(self.readLine(ip_connection, line_ending_token, command_response_timeout))
+					response_text = f"{self.readLine(ip_connection, line_ending_token, command_response_timeout)}"
 					if response_text != "":
 						self.hostPlugin.logger.threaddebug(f"Received: {response_text}")
 						self.handleDeviceResponse(response_text.replace(line_ending_token, ""), command)
@@ -222,8 +222,8 @@ class RPFrameworkTelnetDevice(RPFrameworkDevice):
 				# continue with empty-queue processing unless the connection is shutting down...
 				if continue_processing_commands:
 					# check for any pending data coming IN from the telnet connection; note this is after the
-					# command queue has been emptied so it may be un-prompted incoming data
-					response_text = to_unicode(self.readIfAvailable(ip_connection, line_ending_token, command_response_timeout))
+					# command queue has been emptied, so it may be un-prompted incoming data
+					response_text = f"{self.readIfAvailable(ip_connection, line_ending_token, command_response_timeout)}"
 					if response_text != "":
 						self.hostPlugin.logger.threaddebug(f"Received w/o Command: {response_text}")
 						self.handleDeviceResponse(response_text.replace(line_ending_token, ""), None)
@@ -237,7 +237,7 @@ class RPFrameworkTelnetDevice(RPFrameworkDevice):
 				
 					# check to see if we need to issue an update...
 					if update_status_poller_next_run is not None and time.time() > update_status_poller_next_run:
-						commandQueue.put(RPFrameworkCommand.RPFrameworkCommand(RPFrameworkCommand.CMD_UPDATE_DEVICE_STATUS_FULL, parentAction=update_status_poller_action_id))
+						commandQueue.put(RPFrameworkCommand(RPFrameworkCommand.CMD_UPDATE_DEVICE_STATUS_FULL, parentAction=update_status_poller_action_id))
 				
 		# handle any exceptions that are thrown during execution of the plugin... note that this
 		# should terminate the thread, but it may get spun back up again
@@ -247,12 +247,14 @@ class RPFrameworkTelnetDevice(RPFrameworkDevice):
 			pass
 		except (socket.timeout, EOFError):
 			# this is a standard timeout/disconnect
-			if self.failedConnectionAttempts == 0 or self.hostPlugin.debug:
+			if self.failed_connection_attempts == 0 or self.hostPlugin.debug:
 				self.hostPlugin.logger.error(f"Connection timed out for device {self.indigoDevice.id}")
 				
 			if connection_state_key != "":
 				self.indigoDevice.updateStateOnServer(key=connection_state_key, value="Unavailable")
-				connection_state_key = ""  # prevents the finally from re-updating to disconnected
+
+				# prevent the finally clause from re-updating to disconnected
+				connection_state_key = ""
 				
 			# this really is an error from the user's perspective, so set that state now
 			self.indigoDevice.setErrorStateOnServer("Connection Error")
@@ -262,7 +264,7 @@ class RPFrameworkTelnetDevice(RPFrameworkDevice):
 		except socket.error as e:
 			# this is a standard socket error, such as a reset... we can attempt to recover from this with
 			# a scheduled reconnect
-			if self.failedConnectionAttempts == 0 or self.hostPlugin.debug:
+			if self.failed_connection_attempts == 0 or self.hostPlugin.debug:
 				self.hostPlugin.logg.error(f"Connection failed for device {self.indigoDevice.id}: {e}")
 
 			if connection_state_key != "":
@@ -295,31 +297,31 @@ class RPFrameworkTelnetDevice(RPFrameworkDevice):
 	# format of (ipAddress/HostName, portNumber)
 	#-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 	def getDeviceAddressInfo(self):
-		if self.connectionType == RPFrameworkTelnetDevice.CONNECTIONTYPE_TELNET:
-			return u'', 0
+		if self.connection_type == RPFrameworkTelnetDevice.CONNECTIONTYPE_TELNET:
+			return "", 0
 		else:
-			port_name     = to_unicode(self.hostPlugin.substituteIndigoValues(self.hostPlugin.getGUIConfigValue(self.indigoDevice.deviceTypeId, RPFrameworkTelnetDevice.GUI_CONFIG_SERIALPORT_PORTNAME, ""), self, None))
-			baud_rate     = int(self.hostPlugin.substituteIndigoValues(self.hostPlugin.getGUIConfigValue(self.indigoDevice.deviceTypeId, RPFrameworkTelnetDevice.GUI_CONFIG_SERIALPORT_BAUDRATE, "115200"), self, None))
-			parity        = eval("serial." + self.hostPlugin.substituteIndigoValues(self.hostPlugin.getGUIConfigValue(self.indigoDevice.deviceTypeId, RPFrameworkTelnetDevice.GUI_CONFIG_SERIALPORT_PARITY, "PARITY_NONE"), self, None))
-			byte_size     = eval("serial." + self.hostPlugin.substituteIndigoValues(self.hostPlugin.getGUIConfigValue(self.indigoDevice.deviceTypeId, RPFrameworkTelnetDevice.GUI_CONFIG_SERIALPORT_BYTESIZE, "EIGHTBITS"), self, None))
-			stop_bits     = eval("serial." + self.hostPlugin.substituteIndigoValues(self.hostPlugin.getGUIConfigValue(self.indigoDevice.deviceTypeId, RPFrameworkTelnetDevice.GUI_CONFIG_SERIALPORT_STOPBITS, "STOPBITS_ONE"), self, None))
-			timeout       = float(self.hostPlugin.substituteIndigoValues(self.hostPlugin.getGUIConfigValue(self.indigoDevice.deviceTypeId, RPFrameworkTelnetDevice.GUI_CONFIG_SERIALPORT_READTIMEOUT, "1.0"), self, None))
-			write_timeout = float(self.hostPlugin.substituteIndigoValues(self.hostPlugin.getGUIConfigValue(self.indigoDevice.deviceTypeId, RPFrameworkTelnetDevice.GUI_CONFIG_SERIALPORT_WRITETIMEOUT, "1.0"), self, None))
+			port_name     = f"{self.hostPlugin.substitute_indigo_values(self.hostPlugin.get_gui_config_value(self.indigoDevice.deviceTypeId, RPFrameworkTelnetDevice.GUI_CONFIG_SERIALPORT_PORTNAME, ''), self, None)}"
+			baud_rate     = int(self.hostPlugin.substitute_indigo_values(self.hostPlugin.get_gui_config_value(self.indigoDevice.deviceTypeId, RPFrameworkTelnetDevice.GUI_CONFIG_SERIALPORT_BAUDRATE, '115200'), self, None))
+			parity        = eval("serial." + self.hostPlugin.substitute_indigo_values(self.hostPlugin.get_gui_config_value(self.indigoDevice.deviceTypeId, RPFrameworkTelnetDevice.GUI_CONFIG_SERIALPORT_PARITY, 'PARITY_NONE'), self, None))
+			byte_size     = eval("serial." + self.hostPlugin.substitute_indigo_values(self.hostPlugin.get_gui_config_value(self.indigoDevice.deviceTypeId, RPFrameworkTelnetDevice.GUI_CONFIG_SERIALPORT_BYTESIZE, 'EIGHTBITS'), self, None))
+			stop_bits     = eval("serial." + self.hostPlugin.substitute_indigo_values(self.hostPlugin.get_gui_config_value(self.indigoDevice.deviceTypeId, RPFrameworkTelnetDevice.GUI_CONFIG_SERIALPORT_STOPBITS, 'STOPBITS_ONE'), self, None))
+			timeout       = float(self.hostPlugin.substitute_indigo_values(self.hostPlugin.get_gui_config_value(self.indigoDevice.deviceTypeId, RPFrameworkTelnetDevice.GUI_CONFIG_SERIALPORT_READTIMEOUT, '1.0'), self, None))
+			write_timeout = float(self.hostPlugin.substitute_indigo_values(self.hostPlugin.get_gui_config_value(self.indigoDevice.deviceTypeId, RPFrameworkTelnetDevice.GUI_CONFIG_SERIALPORT_WRITETIMEOUT, '1.0'), self, None))
 			return port_name, (baud_rate, parity, byte_size, stop_bits, timeout, write_timeout)
 		
 	#-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 	# This routine should return a tuple of information about the connection - in the
 	# format of (ipAddress/HostName, portNumber)
 	#-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-	def establishDeviceConnection(self, connectionInfo):
-		if self.connectionType == RPFrameworkTelnetDevice.CONNECTIONTYPE_TELNET:
-			return telnetlib.Telnet(connectionInfo[0], connectionInfo[1])
-		elif self.connectionType == RPFrameworkTelnetDevice.CONNECTIONTYPE_SERIAL:
-			return self.hostPlugin.openSerial(self.indigoDevice.name, connectionInfo[0], baudrate=connectionInfo[1][0], parity=connectionInfo[1][1], bytesize=connectionInfo[1][2], stopbits=connectionInfo[1][3], timeout=connectionInfo[1][4], writeTimeout=connectionInfo[1][5])
-		elif self.connectionType == RPFrameworkTelnetDevice.CONNECTIONTYPE_SOCKET:
+	def establishDeviceConnection(self, connection_info):
+		if self.connection_type == RPFrameworkTelnetDevice.CONNECTIONTYPE_TELNET:
+			return telnetlib.Telnet(connection_info[0], connection_info[1])
+		elif self.connection_type == RPFrameworkTelnetDevice.CONNECTIONTYPE_SERIAL:
+			return self.hostPlugin.openSerial(self.indigoDevice.name, connection_info[0], baudrate=connection_info[1][0], parity=connection_info[1][1], bytesize=connection_info[1][2], stopbits=connection_info[1][3], timeout=connection_info[1][4], writeTimeout=connection_info[1][5])
+		elif self.connection_type == RPFrameworkTelnetDevice.CONNECTIONTYPE_SOCKET:
 			command_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-			command_socket.settimeout(int(self.hostPlugin.getGUIConfigValue(self.indigoDevice.deviceTypeId, RPFrameworkTelnetDevice.GUI_CONFIG_SOCKET_CONNECTIONTIMEOUT, "5")))
-			command_socket.connect((connectionInfo[0], connectionInfo[1]))
+			command_socket.settimeout(int(self.hostPlugin.get_gui_config_value(self.indigoDevice.deviceTypeId, RPFrameworkTelnetDevice.GUI_CONFIG_SOCKET_CONNECTIONTIMEOUT, "5")))
+			command_socket.connect((connection_info[0], connection_info[1]))
 			command_socket.setblocking(0)
 			return command_socket
 		else:
@@ -337,9 +339,9 @@ class RPFrameworkTelnetDevice(RPFrameworkDevice):
 	# provided timeout as the upper-limit to wait
 	#-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 	def readLine(self, connection, lineEndingToken, commandResponseTimeout):
-		if self.connectionType == RPFrameworkTelnetDevice.CONNECTIONTYPE_TELNET:
+		if self.connection_type == RPFrameworkTelnetDevice.CONNECTIONTYPE_TELNET:
 			return to_unicode(connection.read_until(lineEndingToken, commandResponseTimeout))
-		elif self.connectionType == RPFrameworkTelnetDevice.CONNECTIONTYPE_SERIAL:
+		elif self.connection_type == RPFrameworkTelnetDevice.CONNECTIONTYPE_SERIAL:
 			# Python 2.6 changed the readline signature to not include a line-ending token,
 			# so we have to "manually" re-create that here
 			#return connection.readline(None)
@@ -360,7 +362,7 @@ class RPFrameworkTelnetDevice(RPFrameworkDevice):
 	# is an indication of waiting data (there is no waiting until a specified timeout)
 	#-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 	def readIfAvailable(self, connection, lineEndingToken, commandResponseTimeout):
-		if self.connectionType == RPFrameworkTelnetDevice.CONNECTIONTYPE_TELNET:
+		if self.connection_type == RPFrameworkTelnetDevice.CONNECTIONTYPE_TELNET:
 			return to_unicode(connection.read_eager())
 		elif connection.inWaiting() > 0:
 			return to_unicode(self.readLine(connection, lineEndingToken, commandResponseTimeout))
@@ -375,7 +377,7 @@ class RPFrameworkTelnetDevice(RPFrameworkDevice):
 	def handleDeviceResponse(self, responseText, rpCommand):
 		# loop through the list of response definitions defined in the (base) class
 		# and determine if any match
-		for rpResponse in self.hostPlugin.getDeviceResponseDefinitions(self.indigoDevice.deviceTypeId):
+		for rpResponse in self.hostPlugin.get_device_response_definitions(self.indigoDevice.deviceTypeId):
 			if rpResponse.isResponseMatch(responseText, rpCommand, self, self.hostPlugin):
 				self.hostPlugin.logger.threaddebug(f"Found response match: {rpResponse.responseId}")
 				rpResponse.executeEffects(responseText, rpCommand, self, self.hostPlugin)

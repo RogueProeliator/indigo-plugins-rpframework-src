@@ -62,9 +62,9 @@ class RPFrameworkNonCommChildDevice(RPFrameworkDevice):
 	# plugin...
 	#-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 	def queueDeviceCommand(self, command):
-		parent_device_id = int(self.indigoDevice.pluginProps[self.hostPlugin.getGUIConfigValue(self.indigoDevice.deviceTypeId, RPFrameworkPlugin.GUI_CONFIG_PARENTDEVICEIDPROPERTYNAME, "")])
-		if parent_device_id in self.hostPlugin.managedDevices:
-			self.hostPlugin.managedDevices[parent_device_id].queueDeviceCommand(command)
+		parent_device_id = int(self.indigoDevice.pluginProps[self.hostPlugin.get_gui_config_value(self.indigoDevice.deviceTypeId, RPFrameworkPlugin.GUI_CONFIG_PARENTDEVICEIDPROPERTYNAME, "")])
+		if parent_device_id in self.hostPlugin.managed_devices:
+			self.hostPlugin.managed_devices[parent_device_id].queueDeviceCommand(command)
 	
 	#endregion
 	#/////////////////////////////////////////////////////////////////////////////////////

@@ -87,8 +87,8 @@ class RPFrameworkPlugin(indigo.PluginBase):
 	def __init__(self, pluginId, pluginDisplayName, pluginVersion, pluginPrefs, managedDeviceClassModule=None, pluginSupportsUPNP=False):
 		# flag the plugin as undergoing initialization so that we know the full
 		# indigo plugin is not yet available
-		self.pluginIsInitializing    = True
-		self.pluginSupportsUPNPDebug = pluginSupportsUPNP
+		self.plugin_initializing = True
+		self.supports_upnp_debug = pluginSupportsUPNP
 
 		# call the base class' initialization to begin setup...
 		super().__init__(pluginId, pluginDisplayName, pluginVersion, pluginPrefs)
@@ -120,50 +120,50 @@ class RPFrameworkPlugin(indigo.PluginBase):
 
 		# create the generic device dictionary which will store a reference to each device that
 		# is defined in indigo; the ID mapping will map the deviceTypeId to a class name
-		self.managedDevices            = dict()
-		self.managedDeviceClassModule  = managedDeviceClassModule
-		self.managedDeviceClassMapping = dict()
-		self.managedDeviceParams       = dict()
-		self.managedDeviceGUIConfigs   = dict()
+		self.managed_devices           = dict()
+		self.managed_dev_class_module  = managedDeviceClassModule
+		self.managed_dev_class_mapping = dict()
+		self.managed_dev_params        = dict()
+		self.managed_dev_gui_configs   = dict()
 
 		# create a list of actions that are known to the base plugin (these will be processed
 		# automatically when possible by the base classes alone)
-		self.indigoActions             = dict()
-		self.deviceResponseDefinitions = dict()
+		self.indigo_actions            = dict()
+		self.device_response_defns     = dict()
 
 		# the plugin defines the Events processing so that we can handle the update trigger,
 		# if it exists
-		self.indigoEvents = dict()
+		self.indigo_events = dict()
 
 		# this list stores a list of enumerated devices for those devices which support
 		# enumeration via uPNP
-		self.enumeratedDevices     = []
-		self.lastDeviceEnumeration = time.time() - 9999
+		self.enumerated_devices      = []
+		self.last_device_enumeration = time.time() - 9999
 
 		# create the command queue that will be used at the device level
-		self.pluginCommandQueue = Queue.Queue()
+		self.plugin_command_queue = Queue.Queue()
 
 		# create plugin-level configuration variables
-		self.pluginConfigParams = []
+		self.plugin_config_params = []
 
 		# parse the RPFramework plugin configuration XML provided for this plugin,
 		# if it is present
-		self.parseRPFrameworkConfig(pluginDisplayName.replace(" Plugin", ""))
+		self.parse_framework_config(pluginDisplayName.replace(" Plugin", ""))
 
 		# perform any upgrade steps if the plugin is running for the first time after
 		# an upgrade
 		old_plugin_version = pluginPrefs.get("loadedPluginVersion", "")
 		if old_plugin_version != to_unicode(pluginVersion):
-			self.performPluginUpgradeMaintenance(old_plugin_version, to_unicode(pluginVersion))
+			self.perform_plugin_upgrade_maintenance(old_plugin_version, to_unicode(pluginVersion))
 
 		# initialization is complete...
-		self.pluginIsInitializing = False
+		self.plugin_initializing = False
 
 	# -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 	# This routine will parse the RPFrameworkConfig.xml file that is present in the
 	# plugin's directory, if it is present
 	# -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-	def parseRPFrameworkConfig(self, plugin_name):
+	def parse_framework_config(self, plugin_name):
 		plugin_base_path   = os.getcwd()
 		plugin_config_path = os.path.join(plugin_base_path, "RPFrameworkConfig.xml")
 
@@ -178,8 +178,8 @@ class RPFrameworkPlugin(indigo.PluginBase):
 				plugin_param_node = plugin_config_node.find("pluginParams")
 				if plugin_param_node is not None:
 					for pluginParam in plugin_param_node:
-						rp_plugin_param = self.readIndigoParamNode(pluginParam)
-						self.pluginConfigParams.append(rp_plugin_param)
+						rp_plugin_param = self.read_indigo_param_node(pluginParam)
+						self.plugin_config_params.append(rp_plugin_param)
 						self.logger.threaddebug(f"Found plugin param: {rp_plugin_param.indigoId}")
 
 				# read in any plugin-level guiConfigSettings
@@ -187,7 +187,7 @@ class RPFrameworkPlugin(indigo.PluginBase):
 				if plugin_gui_config_node is not None:
 					for gui_setting in plugin_gui_config_node:
 						self.logger.threaddebug(f"Found plugin setting: {gui_setting.tag} = {gui_setting.text}")
-						self.putGUIConfigValue(GUI_CONFIG_PLUGINSETTINGS, gui_setting.tag, gui_setting.text)
+						self.put_gui_config_value(GUI_CONFIG_PLUGINSETTINGS, gui_setting.tag, gui_setting.text)
 
 				# determine if any device mappings are present
 				device_mappings = plugin_config_node.find("deviceMapping")
@@ -195,7 +195,7 @@ class RPFrameworkPlugin(indigo.PluginBase):
 					for deviceMapping in device_mappings.findall("device"):
 						indigo_id  = to_unicode(deviceMapping.get("indigoId"))
 						class_name = to_unicode(deviceMapping.get("className"))
-						self.managedDeviceClassMapping[indigo_id] = class_name
+						self.managed_dev_class_mapping[indigo_id] = class_name
 						self.logger.threaddebug(f"Found device mapping; id: {indigo_id} to class: {class_name}")
 				else:
 					self.logger.threaddebug("No device mappings found")
@@ -212,10 +212,10 @@ class RPFrameworkPlugin(indigo.PluginBase):
 						if device_params_node != None:
 							params_list = list()
 							for device_param in device_params_node.findall("param"):
-								rp_dev_param = self.readIndigoParamNode(device_param)
+								rp_dev_param = self.read_indigo_param_node(device_param)
 								self.logger.threaddebug(f"Created device parameter for managed device '{indigo_device_id}': {rp_dev_param.indigoId}")
 								params_list.append(rp_dev_param)
-							self.managedDeviceParams[indigo_device_id] = params_list
+							self.managed_dev_params[indigo_device_id] = params_list
 
 						# process any GUI configurations -- these are settings that affect how the
 						# plugin appears to Indigo users
@@ -223,7 +223,7 @@ class RPFrameworkPlugin(indigo.PluginBase):
 						if gui_config_node is not None:
 							for gui_setting in gui_config_node:
 								self.logger.threaddebug(f"Found device setting: {gui_setting.tag}={gui_setting.text}")
-								self.putGUIConfigValue(indigo_device_id, gui_setting.tag, gui_setting.text)
+								self.put_gui_config_value(indigo_device_id, gui_setting.tag, gui_setting.text)
 
 						# process any device response definitions... these define what the plugin will do
 						# when a response is received from the device (definition is agnostic of type of device,
@@ -264,7 +264,7 @@ class RPFrameworkPlugin(indigo.PluginBase):
 										dev_response_defn.addResponseEffect(RPFrameworkDeviceResponseEffect(effect_type, effect_update_param, effect_value_format, effect_value_format_ex_val, effect_value_eval_result, effect_exec_condition))
 
 								# add the definition to the plugin's list of response definitions
-								self.addDeviceResponseDefinition(indigo_device_id, dev_response_defn)
+								self.add_device_response_definition(indigo_device_id, dev_response_defn)
 
 				# attempt to read any actions that will be automatically processed by
 				# the framework
@@ -303,10 +303,10 @@ class RPFrameworkPlugin(indigo.PluginBase):
 						if params_node is not None:
 							self.logger.threaddebug(f"Processing {len(params_node)} params for action")
 							for actionParam in params_node.findall("param"):
-								rp_param = self.readIndigoParamNode(actionParam)
+								rp_param = self.read_indigo_param_node(actionParam)
 								self.logger.threaddebug(f"Created parameter for managed action '{rp_action.indigoActionId}': {rp_param.indigoId}")
 								rp_action.addIndigoParameter(rp_param)
-						self.addIndigoAction(rp_action)
+						self.add_indigo_action(rp_action)
 				self.logger.debug("Successfully completed processing of RPFrameworkConfig.xml file")
 			except Exception as err:
 				self.logger.error(f"Plugin Config: Error reading RPFrameworkConfig.xml file at: {plugin_config_path}\n{err}")
@@ -317,7 +317,7 @@ class RPFrameworkPlugin(indigo.PluginBase):
 	# This routine will read in a parameter definition from the given XML node, returning
 	# a RPFrameworkIndigoParam object fully filled in from the node
 	# -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-	def readIndigoParamNode(self, param_node):
+	def read_indigo_param_node(self, param_node):
 		param_indigo_id   = to_unicode(param_node.get("indigoId"))
 		param_type        = eval(f"RPFrameworkIndigoParamDefn.{param_node.get('paramType')}")
 		param_is_required = (param_node.get("isRequired").lower() == "true")
@@ -392,26 +392,26 @@ class RPFrameworkPlugin(indigo.PluginBase):
 		self.logger.debug(f"Entering deviceStartComm for {dev.name}; ID={dev.id}")
 
 		# create the plugin device object and add it to the managed list
-		new_device_object             = self.createDeviceObject(dev)
-		self.managedDevices[dev.id]   = new_device_object
+		new_device_object             = self.create_device_object(dev)
+		self.managed_devices[dev.id]   = new_device_object
 		new_device_object.initiateCommunications()
 
 		# this object may be a child object... if it is then we need to see if its
 		# parent has already been created (and if so add it to that parent)
-		is_child_device_type = self.getGUIConfigValue(dev.deviceTypeId, GUI_CONFIG_ISCHILDDEVICEID, "false").lower() == "true"
+		is_child_device_type = self.get_gui_config_value(dev.deviceTypeId, GUI_CONFIG_ISCHILDDEVICEID, "false").lower() == "true"
 		if is_child_device_type:
 			self.logger.threaddebug("Device is child object, attempting to find parent")
-			parent_device_id = int(dev.pluginProps[self.getGUIConfigValue(dev.deviceTypeId, GUI_CONFIG_PARENTDEVICEIDPROPERTYNAME, "")])
+			parent_device_id = int(dev.pluginProps[self.get_gui_config_value(dev.deviceTypeId, GUI_CONFIG_PARENTDEVICEIDPROPERTYNAME, "")])
 			self.logger.threaddebug(f"Found parent ID of device {dev.id}: {parent_device_id}")
-			if parent_device_id in self.managedDevices:
+			if parent_device_id in self.managed_devices:
 				self.logger.threaddebug("Parent object found, adding this child device now")
-				self.managedDevices[parent_device_id].addChildDevice(new_device_object)
+				self.managed_devices[parent_device_id].addChildDevice(new_device_object)
 
 		# this object could be a parent object whose children have already been created; we need to add those children
 		# to this parent object now
-		for found_device_id in self.managedDevices:
-			found_device = self.managedDevices[found_device_id]
-			if self.getGUIConfigValue(found_device.indigoDevice.deviceTypeId, GUI_CONFIG_ISCHILDDEVICEID, "false").lower() == "true" and int(found_device.indigoDevice.pluginProps[self.getGUIConfigValue(found_device.indigoDevice.deviceTypeId, GUI_CONFIG_PARENTDEVICEIDPROPERTYNAME, "")]) == dev.id:
+		for found_device_id in self.managed_devices:
+			found_device = self.managed_devices[found_device_id]
+			if self.get_gui_config_value(found_device.indigoDevice.deviceTypeId, GUI_CONFIG_ISCHILDDEVICEID, "false").lower() == "true" and int(found_device.indigoDevice.pluginProps[self.get_gui_config_value(found_device.indigoDevice.deviceTypeId, GUI_CONFIG_PARENTDEVICEIDPROPERTYNAME, "")]) == dev.id:
 				self.logger.threaddebug(f"Found previously-created child object for parent; child ID: {found_device.indigoDevice.id}")
 				new_device_object.addChildDevice(found_device)
 
@@ -421,14 +421,14 @@ class RPFrameworkPlugin(indigo.PluginBase):
 	# This routine must be implemented in ancestor classes in order to return the device
 	# object that is to be created/managed
 	# -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-	def createUnManagedDeviceObject(self, device):
-		raise "createUnManagedDeviceObject not implemented"
-	def createDeviceObject(self, device):
-		if not (self.managedDeviceClassModule is None) and device.deviceTypeId in self.managedDeviceClassMapping:
-			device_class = getattr(self.managedDeviceClassModule, self.managedDeviceClassMapping[device.deviceTypeId])
+	def create_unmanaged_device_object(self, device):
+		raise "create_unmanaged_device_object not implemented"
+	def create_device_object(self, device):
+		if not (self.managed_dev_class_module is None) and device.deviceTypeId in self.managed_dev_class_mapping:
+			device_class = getattr(self.managed_dev_class_module, self.managed_dev_class_mapping[device.deviceTypeId])
 			return device_class(self, device)
 		else:
-			return self.createUnManagedDeviceObject(device)
+			return self.create_unmanaged_device_object(device)
 
 	# -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 	# This routine is called whenever the plugin should cease communicating with the
@@ -440,17 +440,17 @@ class RPFrameworkPlugin(indigo.PluginBase):
 		# dequeue any pending reconnection attempts...
 
 		# first remove the device from the parent if this is a child device...
-		is_child_device_type = self.getGUIConfigValue(dev.deviceTypeId, GUI_CONFIG_ISCHILDDEVICEID, "false").lower() == "true"
+		is_child_device_type = self.get_gui_config_value(dev.deviceTypeId, GUI_CONFIG_ISCHILDDEVICEID, "false").lower() == "true"
 		if is_child_device_type:
 			self.logger.threaddebug("Device is child object, attempting to remove from parent...")
-			parent_device_id = int(dev.pluginProps[self.getGUIConfigValue(dev.deviceTypeId, GUI_CONFIG_PARENTDEVICEIDPROPERTYNAME, "")])
-			if parent_device_id in self.managedDevices:
+			parent_device_id = int(dev.pluginProps[self.get_gui_config_value(dev.deviceTypeId, GUI_CONFIG_PARENTDEVICEIDPROPERTYNAME, "")])
+			if parent_device_id in self.managed_devices:
 				self.logger.threaddebug(f"Removing device from parent ID: {parent_device_id}")
-				self.managedDevices[parent_device_id].removeChildDevice(self.managedDevices[dev.id])
+				self.managed_devices[parent_device_id].removeChildDevice(self.managed_devices[dev.id])
 
 		# remove the primary managed object
-		self.managedDevices[dev.id].terminateCommunications()
-		del self.managedDevices[dev.id]
+		self.managed_devices[dev.id].terminateCommunications()
+		del self.managed_devices[dev.id]
 
 		self.logger.debug(f"Exiting deviceStopComm for {dev.name}")
 
@@ -465,9 +465,9 @@ class RPFrameworkPlugin(indigo.PluginBase):
 		# storing it against the trigger type
 		if not self.registerCustomTrigger(trigger):
 			trigger_type = trigger.pluginTypeId
-			if not (trigger_type in self.indigoEvents):
-				self.indigoEvents[trigger_type] = dict()
-			self.indigoEvents[trigger_type][trigger.id] = trigger
+			if not (trigger_type in self.indigo_events):
+				self.indigo_events[trigger_type] = dict()
+			self.indigo_events[trigger_type][trigger.id] = trigger
 
 		self.logger.debug(f"Registered trigger: {trigger.id}")
 
@@ -487,9 +487,9 @@ class RPFrameworkPlugin(indigo.PluginBase):
 		# removing it from the dictionary
 		if not self.registerCustomTrigger(trigger):
 			trigger_type = trigger.pluginTypeId
-			if trigger_type in self.indigoEvents:
-				if trigger.id in self.indigoEvents[trigger_type]:
-					del self.indigoEvents[trigger_type][trigger.id]
+			if trigger_type in self.indigo_events:
+				if trigger.id in self.indigo_events[trigger_type]:
+					del self.indigo_events[trigger_type][trigger.id]
 
 		self.logger.debug(f"Stopped trigger: {trigger.id}")
 
@@ -511,28 +511,28 @@ class RPFrameworkPlugin(indigo.PluginBase):
 	def runConcurrentThread(self):
 		try:
 			# read in any configuration values necessary...
-			empty_queue_thread_sleep_time = float(self.getGUIConfigValue(GUI_CONFIG_PLUGINSETTINGS, GUI_CONFIG_PLUGIN_COMMANDQUEUEIDLESLEEP, u'20'))
+			empty_queue_thread_sleep_time = float(self.get_gui_config_value(GUI_CONFIG_PLUGINSETTINGS, GUI_CONFIG_PLUGIN_COMMANDQUEUEIDLESLEEP, u'20'))
 
 			while True:
 				# process pending commands now...
 				re_queue_commands_list = list()
-				while not self.pluginCommandQueue.empty():
-					len_queue = self.pluginCommandQueue.qsize()
+				while not self.plugin_command_queue.empty():
+					len_queue = self.plugin_command_queue.qsize()
 					self.logger.threaddebug(f"Plugin Command queue has {len_queue} command(s) waiting")
 
 					# the command name will identify what action should be taken...
 					re_queue_command = False
-					command = self.pluginCommandQueue.get()
+					command = self.plugin_command_queue.get()
 					if command.commandName == RPFrameworkCommand.CMD_DEVICE_RECONNECT:
 						# the command payload will be in the form of a tuple:
 						#	(DeviceID, DeviceInstanceIdentifier, ReconnectTime)
 						#	ReconnectTime is the datetime where the next reconnection attempt should occur
 						time_now = time.time()
 						if time_now > command.commandPayload[2]:
-							if command.commandPayload[0] in self.managedDevices:
-								if self.managedDevices[command.commandPayload[0]].deviceInstanceIdentifier == command.commandPayload[1]:
+							if command.commandPayload[0] in self.managed_devices:
+								if self.managed_devices[command.commandPayload[0]].deviceInstanceIdentifier == command.commandPayload[1]:
 									self.logger.debug(f"Attempting reconnection to device {command.commandPayload[0]}")
-									self.managedDevices[command.commandPayload[0]].initiateCommunications()
+									self.managed_devices[command.commandPayload[0]].initiateCommunications()
 								else:
 									self.logger.threaddebug(f"Ignoring reconnection command for device {command.commandPayload[0]}; new instance detected")
 							else:
@@ -542,22 +542,22 @@ class RPFrameworkPlugin(indigo.PluginBase):
 
 					elif command.commandName == RPFrameworkCommand.CMD_DEBUG_LOGUPNPDEVICES:
 						# kick off the UPnP discovery and logging now
-						self.logUPnPDevicesFoundProcessing()
+						self.log_upnp_devices_found_processing()
 
 					else:
 						# allow a base class to process the command
-						self.handleUnknownPluginCommand(command, re_queue_commands_list)
+						self.handle_unknown_plugin_command(command, re_queue_commands_list)
 
 					# complete the de-queuing of the command, allowing the next
 					# command in queue to rise to the top
-					self.pluginCommandQueue.task_done()
+					self.plugin_command_queue.task_done()
 					if re_queue_command:
 						self.logger.threaddebug("Plugin command queue not yet ready; re-queuing for future execution")
 						re_queue_commands_list.append(command)
 
 				# any commands that did not yet execute should be placed back into the queue
-				for commandToRequeue in re_queue_commands_list:
-					self.pluginCommandQueue.put(commandToRequeue)
+				for command_to_requeue in re_queue_commands_list:
+					self.plugin_command_queue.put(command_to_requeue)
 
 				# sleep on an empty queue... note that this should not normally be as granular
 				# as a device's communications! (value is in seconds)
@@ -572,7 +572,7 @@ class RPFrameworkPlugin(indigo.PluginBase):
 	# This routine will be called to handle any unknown commands at the plugin level; it
 	# can/should be overridden in the plugin implementation (if needed)
 	#-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-	def handleUnknownPluginCommand(self, rpCommand, reQueueCommandsList):
+	def handle_unknown_plugin_command(self, rp_command, requeue_commands_list):
 		pass
 
 	#endregion
@@ -583,17 +583,17 @@ class RPFrameworkPlugin(indigo.PluginBase):
 	#-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 	# This routine will add a new action to the managed actions of the plugin
 	#-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-	def addIndigoAction(self, indigoAction):
-		self.indigoActions[indigoAction.indigoActionId] = indigoAction
+	def add_indigo_action(self, indigo_action):
+		self.indigo_actions[indigo_action.indigoActionId] = indigo_action
 
 	#-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 	# This routine will add a new device response to the list of responses that the plugin
 	# can automatically handle
 	#-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-	def addDeviceResponseDefinition(self, deviceTypeId, responseDfn):
-		if not (deviceTypeId in self.deviceResponseDefinitions):
-			self.deviceResponseDefinitions[deviceTypeId] = list()
-		self.deviceResponseDefinitions[deviceTypeId].append(responseDfn)
+	def add_device_response_definition(self, device_type_id, response_dfn):
+		if not (device_type_id in self.device_response_defns):
+			self.device_response_defns[device_type_id] = list()
+		self.device_response_defns[device_type_id].append(response_dfn)
 
 	#endregion
 	#/////////////////////////////////////////////////////////////////////////////////////
@@ -609,7 +609,7 @@ class RPFrameworkPlugin(indigo.PluginBase):
 		error_messages = indigo.Dict()
 
 		# check each defined parameter, if any exist...
-		for param in self.pluginConfigParams:
+		for param in self.plugin_config_params:
 			if param.indigoId in valuesDict:
 				# a value is present for this parameter - validate it
 				if not param.isValueValid(valuesDict[param.indigoId]):
@@ -646,44 +646,17 @@ class RPFrameworkPlugin(indigo.PluginBase):
 				self.logger.info("Debugging enabled... remember to turn off when done!")
 
 	#-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-	# This routine is called in order to get the initial values for the menu actions
-	# defined in MenuItems.xml. The default (as per the base) just returns a values and
-	# error dictionary, both blank
-	#-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-	def getMenuActionConfigUiValues(self, menuId):
-		values_dict    = indigo.Dict()
-		error_msg_dict = indigo.Dict()
-
-		if menuId == "checkForUpdateImmediate":
-			# we need to run the update during the launch and then show the results to the
-			# user... watch for failures and do not let this go on (must time out) since
-			# the dialog could get killed
-			update_available              = self.checkVersionNow()
-			values_dict["currentVersion"] = to_unicode(self.pluginVersion)
-			values_dict["latestVersion"]  = self.latestReleaseFound
-
-			# give the user a "better" message about the current status
-			if self.latestReleaseFound == "":
-				values_dict["versionCheckResults"] = "3"
-			elif update_available:
-				values_dict["versionCheckResults"] = "1"
-			else:
-				values_dict["versionCheckResults"] = "2"
-
-		return values_dict, error_msg_dict
-
-	#-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 	# This routine will be called to validate the information entered into the Device
 	# configuration GUI from within Indigo (it will only validate registered params)
 	#-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-	def validateDeviceConfigUi(self, valuesDict, deviceTypeId, devId):
+	def validateDeviceConfigUi(self, valuesDict, device_type_id, devId):
 		# create an error message dictionary to hold any validation issues
 		# (and their messages) that we find
 		error_messages = indigo.Dict()
 
 		# loop through each parameter for this device and validate one-by-one
-		if deviceTypeId in self.managedDeviceParams:
-			for param in self.managedDeviceParams[deviceTypeId]:
+		if device_type_id in self.managed_dev_params:
+			for param in self.managed_dev_params[device_type_id]:
 				if param.indigoId in valuesDict:
 					# a parameter value is present, validate it now
 					if not param.isValueValid(valuesDict[param.indigoId]):
@@ -696,10 +669,10 @@ class RPFrameworkPlugin(indigo.PluginBase):
 		if len(error_messages) == 0:
 			# process any hidden variables that are used to show state information in
 			# indigo or as a RPFramework config/storage
-			valuesDict["address"] = self.substituteIndigoValues(self.getGUIConfigValue(deviceTypeId, GUI_CONFIG_ADDRESSKEY, ""), None, valuesDict)
+			valuesDict["address"] = self.substitute_indigo_values(self.get_gui_config_value(device_type_id, GUI_CONFIG_ADDRESSKEY, ""), None, valuesDict)
 			self.logger.threaddebug("Setting address of {devId} to {valuesDict['address']}")
 
-			return self.validateDeviceConfigUiEx(valuesDict, deviceTypeId, devId)
+			return self.validateDeviceConfigUiEx(valuesDict, device_type_id, devId)
 		else:
 			return False, valuesDict, error_messages
 
@@ -718,8 +691,8 @@ class RPFrameworkPlugin(indigo.PluginBase):
 	#-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 	def validateActionConfigUi(self, valuesDict, typeId, actionId):
 		self.logger.threaddebug(f"Call to validate action: {typeId}")
-		if typeId in self.indigoActions:
-			action_defn = self.indigoActions[typeId]
+		if typeId in self.indigo_actions:
+			action_defn = self.indigo_actions[typeId]
 			managed_action_validation = action_defn.validateActionValues(valuesDict)
 			if not managed_action_validation[0]:
 				self.logger.threaddebug(f"Managed validation failed: {managed_action_validation[1]}{managed_action_validation[2]}")
@@ -735,8 +708,8 @@ class RPFrameworkPlugin(indigo.PluginBase):
 		# the routine is designed to pass the call along to the device since most of the
 		# time this is device-specific (such as inputs)
 		self.logger.threaddebug(f"Dynamic menu requested for Device ID: {targetId}")
-		if targetId in self.managedDevices:
-			return self.managedDevices[targetId].getConfigDialogMenuItems(filter, valuesDict, typeId, targetId)
+		if targetId in self.managed_devices:
+			return self.managed_devices[targetId].getConfigDialogMenuItems(filter, valuesDict, typeId, targetId)
 		else:
 			self.logger.debug(f"Call to getConfigDialogMenu for device not managed by this plugin")
 			return []
@@ -746,16 +719,16 @@ class RPFrameworkPlugin(indigo.PluginBase):
 	# network matching the service given by the filter
 	#-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 	def getConfigDialogUPNPDeviceMenu(self, filter=u'', valuesDict=None, typeId=u'', targetId=0):
-		self.updateUPNPEnumerationList(typeId)
-		return self.parseUPNPDeviceList(self.enumeratedDevices)
+		self.update_upnp_enumeration_list(typeId)
+		return self.parse_upnp_device_list(self.enumerated_devices)
 
 	#-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 	# This routine is called whenever the user clicks the "Select" button on a device
 	# dialog that asks for selecting from an list of enumerated devices
 	#-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 	def selectUPNPEnumeratedDeviceForUse(self, valuesDict, typeId, devId):
-		menu_field_id   = self.getGUIConfigValue(typeId, GUI_CONFIG_UPNP_ENUMDEVICESFIELDID, "upnpEnumeratedDevices")
-		target_field_id = self.getGUIConfigValue(typeId, GUI_CONFIG_UPNP_DEVICESELECTTARGETFIELDID, "httpAddress")
+		menu_field_id   = self.get_gui_config_value(typeId, GUI_CONFIG_UPNP_ENUMDEVICESFIELDID, "upnpEnumeratedDevices")
+		target_field_id = self.get_gui_config_value(typeId, GUI_CONFIG_UPNP_DEVICESELECTTARGETFIELDID, "httpAddress")
 		if valuesDict[menu_field_id] != "":
 			# the target field may be just the address or may be broken up into multiple parts, separated
 			# by a colon (in which case the menu ID value must match!)
@@ -770,15 +743,15 @@ class RPFrameworkPlugin(indigo.PluginBase):
 		return valuesDict
 
 	#-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-	# This routine is called to parse out a uPNP search results list in order to createDeviceObject
+	# This routine is called to parse out a uPNP search results list in order to create_device_object
 	# an indigo-friendly menu; usually will be overridden in plugin descendants
 	#-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-	def parseUPNPDeviceList(self, deviceList):
+	def parse_upnp_device_list(self, deviceList):
 		try:
 			menu_items = []
-			for networkDevice in deviceList:
-				self.logger.threaddebug(f"Found uPnP Device: {networkDevice}")
-				menu_items.append((networkDevice.location, networkDevice.server))
+			for network_device in deviceList:
+				self.logger.threaddebug(f"Found uPnP Device: {network_device}")
+				menu_items.append((network_device.location, network_device.server))
 			return menu_items
 		except:
 			self.logger.warning("Error parsing UPNP devices found on the network")
@@ -794,7 +767,7 @@ class RPFrameworkPlugin(indigo.PluginBase):
 	#-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 	# This routine will validate whether or not an IP address is valid as a IPv4 addr
 	#-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-	def isIPv4Valid(self, ip):
+	def is_ip_v4_valid(self, ip):
 		# Make sure a value was entered for the address... an IPv4 should require at least
 		# 7 characters (0.0.0.0)
 		ip = to_unicode(ip)
@@ -828,32 +801,32 @@ class RPFrameworkPlugin(indigo.PluginBase):
 	# the plugin developer will only assign the action callback to this routine if it
 	# should be handled
 	#-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-	def executeAction(self, pluginAction, indigoActionId="", indigoDeviceId="", paramValues=None):
+	def execute_action(self, pluginAction, indigoActionId="", indigoDeviceId="", paramValues=None):
 		# ensure that the actionID specified by the action is a managed action that
 		# we can automatically handle
-		if pluginAction != None:
+		if pluginAction is not None:
 			indigoActionId = pluginAction.pluginTypeId
 			indigoDeviceId = pluginAction.deviceId
 			paramValues    = pluginAction.props
 
 		# ensure that action and device are both managed... if so they will each appear in
 		# the respective member variable dictionaries
-		if indigoActionId not in self.indigoActions:
+		if indigoActionId not in self.indigo_actions:
 			self.logger.error(f"Execute action called for non-managed action id: {indigoActionId}")
 			return
-		if indigoDeviceId not in self.managedDevices:
+		if indigoDeviceId not in self.managed_devices:
 			self.logger.error(f"Execute action called for non-managed device id: {indigoDeviceId}")
 			return
 
 		# if execution made it this far then we have the action & device and can execute
 		# that action now...
-		self.indigoActions[indigoActionId].generateActionCommands(self, self.managedDevices[indigoDeviceId], paramValues)
+		self.indigo_actions[indigoActionId].generateActionCommands(self, self.managed_devices[indigoDeviceId], paramValues)
 
 	#-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 	# This routine will toggled the debug setting on all devices managed... it is used to
 	# allow setting the debug status w/o restarting the plugin
 	#-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-	def toggleDebugEnabled(self):
+	def toggle_debug_enabled(self):
 		if self.debugLevel == DEBUGLEVEL_NONE:
 			self.debugLevel = DEBUGLEVEL_LOW
 			self.indigo_log_handler.setLevel(logging.DEBUG)
@@ -870,14 +843,14 @@ class RPFrameworkPlugin(indigo.PluginBase):
 	# This routine will be called when the user has created a request to log the UPnP
 	# debug information to the Indigo log
 	#-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-	def logUPnPDevicesFound(self, valuesDict, typeId):
+	def log_upnp_devices_found(self, valuesDict, typeId):
 		# perform validation here... only real requirement is to have a "type" selected
 		# and this should always be the case...
 		errors_dict = indigo.Dict()
 
 		# add a new command to the plugin's command queue for processing on a background
 		# thread (required to avoid Indigo timing out the operation!)
-		self.pluginCommandQueue.put(RPFrameworkCommand.RPFrameworkCommand(RPFrameworkCommand.CMD_DEBUG_LOGUPNPDEVICES, commandPayload=None))
+		self.plugin_command_queue.put(RPFrameworkCommand.RPFrameworkCommand(RPFrameworkCommand.CMD_DEBUG_LOGUPNPDEVICES, commandPayload=None))
 		self.logger.info("Scheduled UPnP Device Search")
 
 		# return to the dialog to allow it to close
@@ -887,7 +860,7 @@ class RPFrameworkPlugin(indigo.PluginBase):
 	# This routine processing the logging of the UPnP devices once the plugin spools the
 	# command on the background thread
 	#-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-	def logUPnPDevicesFoundProcessing(self):
+	def log_upnp_devices_found_processing(self):
 		try:
 			# perform the UPnP search and logging now...
 			self.logger.debug("Beginning UPnP Device Search")
@@ -895,7 +868,7 @@ class RPFrameworkPlugin(indigo.PluginBase):
 			discovery_started      = time.time()
 			discovered_device_list = uPnPDiscover(service_target, timeout=6)
 
-			# create an HTML file that contains the details for all of the devices found on the network
+			# create an HTML file that contains the details for all the devices found on the network
 			self.logger.debug("UPnP Device Search completed... creating output HTML")
 			device_html  = '<html><head><title>UPnP Devices Found</title><style type="text/css">html,body { margin: 0px; padding: 0px; width: 100%; height: 100%; }\n.upnpDevice { margin: 10px 0px 8px 5px; border-bottom: solid 1px #505050; }\n.fieldLabel { width: 140px; display: inline-block; }</style></head><body>'
 			device_html += "<div style='background-color: #3f51b5; width: 100%; height: 50px; border-bottom: solid 2px black;'><span style='color: #a1c057; font-size: 25px; font-weight: bold; line-height: 49px; padding-left: 3px;'>RogueProeliator's RPFramework UPnP Discovery Report</span></div>"
@@ -914,7 +887,7 @@ class RPFrameworkPlugin(indigo.PluginBase):
 
 			# write out the file...
 			self.logger.threaddebug("Writing UPnP Device Search HTML to file")
-			temp_filename          = self.getPluginDirectoryFilePath("tmpUPnPDiscoveryResults.html")
+			temp_filename          = self.get_plugin_directory_file_path("tmpUPnPDiscoveryResults.html")
 			upnp_results_html_file = open(temp_filename, 'w')
 			upnp_results_html_file.write(to_str(device_html))
 			upnp_results_html_file.close()
@@ -929,7 +902,7 @@ class RPFrameworkPlugin(indigo.PluginBase):
 	# This routine will be called whenever the user has chosen to dump the device details
 	# to the event log via the menuitem action
 	#-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-	def dumpDeviceDetailsToLog(self, valuesDict, typeId):
+	def dump_device_details_to_log(self, valuesDict, typeId):
 		errors_dict     = indigo.Dict()
 		devices_to_dump = valuesDict.get("devicesToDump", None)
 
@@ -937,9 +910,9 @@ class RPFrameworkPlugin(indigo.PluginBase):
 			errors_dict["devicesToDump"] = "Please select one or more devices"
 			return False, valuesDict, errors_dict
 		else:
-			for deviceId in devices_to_dump:
-				self.logger.info(f"Dumping details for DeviceID: {deviceId}")
-				dump_dev = indigo.devices[int(deviceId)]
+			for device_id in devices_to_dump:
+				self.logger.info(f"Dumping details for DeviceID: {device_id}")
+				dump_dev = indigo.devices[int(device_id)]
 				self.logger.info(to_unicode(dump_dev))
 			return True, valuesDict, errors_dict
 
@@ -948,9 +921,9 @@ class RPFrameworkPlugin(indigo.PluginBase):
 	# comes into the plugin we will pass it off the device now
 	#-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 	def actionControlDimmerRelay(self, action, dev):
-		# transform this action into our standard "executeAction" parameters so that the
+		# transform this action into our standard "execute_action" parameters so that the
 		# action is processed in a standard way
-		indigo_action_id = to_unicode(action.deviceAction)
+		indigo_action_id = f"{action.deviceAction}"
 		if indigo_action_id == "11":
 			indigo_action_id = "StatusRequest"
 
@@ -959,7 +932,7 @@ class RPFrameworkPlugin(indigo.PluginBase):
 		param_values["actionValue"] = f"{action.actionValue}"
 		self.logger.debug(f"Dimmer Command: ActionId={indigo_action_id}; Device={indigo_device_id}; actionValue={param_values['actionValue']}")
 
-		self.executeAction(None, indigo_action_id, indigo_device_id, param_values)
+		self.execute_action(None, indigo_action_id, indigo_device_id, param_values)
 
 	#endregion
 	#/////////////////////////////////////////////////////////////////////////////////////
@@ -970,8 +943,8 @@ class RPFrameworkPlugin(indigo.PluginBase):
 	# This routine will perform a substitution on a string for all Indigo-values that
 	# may be substituted (variables, devices, states, parameters, etc.)
 	#-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-	def substituteIndigoValues(self, input, rpDevice, actionParamValues):
-		substituted_string = input
+	def substitute_indigo_values(self, input_str, rp_device, action_param_values):
+		substituted_string = input_str
 		if substituted_string is None:
 			substituted_string = ""
 
@@ -979,27 +952,27 @@ class RPFrameworkPlugin(indigo.PluginBase):
 		# the parameter could call for a substitution
 		ap_matcher = re.compile(r'%ap:([a-z\d]+)%', re.IGNORECASE)
 		for match in ap_matcher.finditer(substituted_string):
-			substituted_string = substituted_string.replace(f"{match.group(0)}", f"{actionParamValues[match.group(1)]}")
+			substituted_string = substituted_string.replace(f"{match.group(0)}", f"{action_param_values[match.group(1)]}")
 
 		# substitute device properties since the substitute method below handles states...
 		dp_matcher = re.compile(r'%dp:([a-z\d]+)%', re.IGNORECASE)
 		for match in dp_matcher.finditer(substituted_string):
-			if type(rpDevice.indigoDevice.pluginProps.get(match.group(1), None)) is indigo.List:
-				substituted_string = substituted_string.replace(f"{match.group(0)}", "'" + ','.join(rpDevice.indigoDevice.pluginProps.get(match.group(1))) + "'")
+			if type(rp_device.indigoDevice.pluginProps.get(match.group(1), None)) is indigo.List:
+				substituted_string = substituted_string.replace(f"{match.group(0)}", "'" + ','.join(rp_device.indigoDevice.pluginProps.get(match.group(1))) + "'")
 			else:
-				substituted_string = substituted_string.replace(f"{match.group(0)}", f"{rpDevice.indigoDevice.pluginProps.get(match.group(1), '')}")
+				substituted_string = substituted_string.replace(f"{match.group(0)}", f"{rp_device.indigoDevice.pluginProps.get(match.group(1), '')}")
 
 		# handle device states for any where we do not specify a device id
 		ds_matcher = re.compile(r'%ds:([a-z\d]+)%', re.IGNORECASE)
 		for match in ds_matcher.finditer(substituted_string):
-			substituted_string = substituted_string.replace(f"{match.group(0)}", f"{rpDevice.indigoDevice.states.get(match.group(1), '')}")
+			substituted_string = substituted_string.replace(f"{match.group(0)}", f"{rp_device.indigoDevice.states.get(match.group(1), '')}")
 
 		# handle parent device properties (for child devices)
-		if rpDevice is not None:
-			if self.getGUIConfigValue(rpDevice.indigoDevice.deviceTypeId, GUI_CONFIG_ISCHILDDEVICEID, "false").lower() == "true":
-				parent_device_id = int(rpDevice.indigoDevice.pluginProps[self.getGUIConfigValue(rpDevice.indigoDevice.deviceTypeId, GUI_CONFIG_PARENTDEVICEIDPROPERTYNAME, "")])
-				if parent_device_id in self.managedDevices:
-					parent_rp_device = self.managedDevices[parent_device_id]
+		if rp_device is not None:
+			if self.get_gui_config_value(rp_device.indigoDevice.deviceTypeId, GUI_CONFIG_ISCHILDDEVICEID, "false").lower() == "true":
+				parent_device_id = int(rp_device.indigoDevice.pluginProps[self.get_gui_config_value(rp_device.indigoDevice.deviceTypeId, GUI_CONFIG_PARENTDEVICEIDPROPERTYNAME, "")])
+				if parent_device_id in self.managed_devices:
+					parent_rp_device = self.managed_devices[parent_device_id]
 					pdp_matcher = re.compile(r'%pdp:([a-z\d]+)%', re.IGNORECASE)
 					for match in pdp_matcher.finditer(substituted_string):
 						if type(parent_rp_device.indigoDevice.pluginProps.get(match.group(1), None)) is indigo.List:
@@ -1022,70 +995,70 @@ class RPFrameworkPlugin(indigo.PluginBase):
 	# This routine will set a GUI configuration value given the device type, the key and
 	# the value for the device
 	#-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-	def putGUIConfigValue(self, deviceTypeId, configKey, configValue):
-		if deviceTypeId not in self.managedDeviceGUIConfigs:
-			self.managedDeviceGUIConfigs[deviceTypeId] = dict()
-		self.managedDeviceGUIConfigs[deviceTypeId][configKey] = configValue
+	def put_gui_config_value(self, device_type_id, config_key, config_value):
+		if device_type_id not in self.managed_dev_gui_configs:
+			self.managed_dev_gui_configs[device_type_id] = dict()
+		self.managed_dev_gui_configs[device_type_id][config_key] = config_value
 
 	#-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 	# This routine will retrieve a GUI config value for a device type and key; it allows
 	# passing in a default value in case the value is not found in the settings
 	#-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-	def getGUIConfigValue(self, deviceTypeId, configKey, defaultValue=""):
-		if deviceTypeId not in self.managedDeviceGUIConfigs:
-			return defaultValue
-		elif configKey in self.managedDeviceGUIConfigs[deviceTypeId]:
-			return self.managedDeviceGUIConfigs[deviceTypeId][configKey]
+	def get_gui_config_value(self, device_type_id, config_key, default_value=""):
+		if device_type_id not in self.managed_dev_gui_configs:
+			return default_value
+		elif config_key in self.managed_dev_gui_configs[device_type_id]:
+			return self.managed_dev_gui_configs[device_type_id][config_key]
 		else:
-			self.logger.threaddebug(f"Returning default GUIConfigValue for {deviceTypeId}: {configKey}")
-			return defaultValue
+			self.logger.threaddebug(f"Returning default GUIConfigValue for {device_type_id}: {config_key}")
+			return default_value
 
 	#-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 	# This routine will retrieve the list of device response definitions for the given
 	# device type
 	#-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-	def getDeviceResponseDefinitions(self, deviceTypeId):
-		if deviceTypeId in self.deviceResponseDefinitions:
-			return self.deviceResponseDefinitions[deviceTypeId]
+	def get_device_response_definitions(self, device_type_id):
+		if device_type_id in self.device_response_defns:
+			return self.device_response_defns[device_type_id]
 		else:
 			return ()
 
 	#-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 	# This routine will update the enumeratedDevices list of devices from the uPNP
 	#-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-	def updateUPNPEnumerationList(self, deviceTypeId):
-		u_pnp_cache_time = int(self.getGUIConfigValue(deviceTypeId, GUI_CONFIG_UPNP_CACHETIMESEC, "180"))
-		if time.time() > self.lastDeviceEnumeration + u_pnp_cache_time or len(self.enumeratedDevices) == 0:
-			service_id = self.getGUIConfigValue(deviceTypeId, GUI_CONFIG_UPNP_SERVICE, "ssdp:all")
+	def update_upnp_enumeration_list(self, device_type_id):
+		u_pnp_cache_time = int(self.get_gui_config_value(device_type_id, GUI_CONFIG_UPNP_CACHETIMESEC, "180"))
+		if time.time() > self.last_device_enumeration + u_pnp_cache_time or len(self.enumerated_devices) == 0:
+			service_id = self.get_gui_config_value(device_type_id, GUI_CONFIG_UPNP_SERVICE, "ssdp:all")
 			self.logger.debug(f"Performing uPnP search for: {service_id}")
 			discovered_devices = uPnPDiscover(service_id)
 			self.logger.debug(f"Found {len(discovered_devices)} devices")
 
-			self.enumeratedDevices     = discovered_devices
-			self.lastDeviceEnumeration = time.time()
+			self.enumerated_devices     = discovered_devices
+			self.last_device_enumeration = time.time()
 
 	#-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 	# This routine will get the full path to a file with the given name inside the plugin
 	# directory; note this is specifically returning a string, not unicode, to allow
 	# use of the IO libraries which require ascii
 	#-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-	def getPluginDirectoryFilePath(self, fileName, pluginName = None):
-		if pluginName is None:
-			pluginName = self.pluginDisplayName.replace(" Plugin", "")
+	def get_plugin_directory_file_path(self, file_name, plugin_name=None):
+		if plugin_name is None:
+			plugin_name = self.pluginDisplayName.replace(" Plugin", "")
 		indigo_base_path = indigo.server.getInstallFolderPath()
 
-		requested_file_path = os.path.join(indigo_base_path, f"Plugins/{pluginName}.indigoPlugin/Contents/Server Plugin/{fileName}")
-		return to_str(requested_file_path)
+		requested_file_path = os.path.join(indigo_base_path, f"Plugins/{plugin_name}.indigoPlugin/Contents/Server Plugin/{file_name}")
+		return f"{requested_file_path}"
 
 	#-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 	# This routine is called whenever the plugin is updating from an older version, as
 	# determined by the plugin property and plugin version number
 	#-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-	def performPluginUpgradeMaintenance(self, oldVersion, newVersion):
-		if oldVersion == "":
-			self.logger.info(f"Performing first upgrade/run of version {newVersion}")
+	def perform_plugin_upgrade_maintenance(self, old_version, new_version):
+		if old_version == "":
+			self.logger.info(f"Performing first upgrade/run of version {new_version}")
 		else:
-			self.logger.info(f"Performing upgrade from {oldVersion} to {newVersion}")
+			self.logger.info(f"Performing upgrade from {old_version} to {new_version}")
 
 		# remove any unwanted directories from the RPFramework
 		plugin_base_path = os.getcwd()
@@ -1102,18 +1075,18 @@ class RPFrameworkPlugin(indigo.PluginBase):
 				self.logger.error(f"Failed to remove path during upgrade: {removePath}")
 
 		# allow the descendant classes to perform their own upgrade options
-		self.performPluginUpgrade(oldVersion, newVersion)
+		self.perform_plugin_upgrade(old_version, new_version)
 
 		# update the version flag within our plugin
-		self.pluginPrefs["loadedPluginVersion"] = newVersion
+		self.pluginPrefs["loadedPluginVersion"] = new_version
 		self.savePluginPrefs()
-		self.logger.info(f"Completed plugin updating/installation for {newVersion}")
+		self.logger.info(f"Completed plugin updating/installation for {new_version}")
 
 	#-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 	# This routine may be used by plugins to perform any upgrades specific to the plugin;
 	# it will be called following the framework's update processing
 	#-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-	def performPluginUpgrade(self, oldVersion, newVersion):
+	def perform_plugin_upgrade(self, old_version, new_version):
 		pass
 
 	#endregion

@@ -106,7 +106,7 @@ class RPFrameworkDeviceResponse(object):
 			substituted_criteria = substituted_criteria.replace("%cp:response%", responseObj)
 		
 		# substitute the standard RPFramework substitutions
-		substituted_criteria = rpPlugin.substituteIndigoValues(substituted_criteria, rpDevice, None)
+		substituted_criteria = rpPlugin.substitute_indigo_values(substituted_criteria, rpDevice, None)
 		
 		#return the result back to the caller
 		return substituted_criteria
@@ -121,7 +121,7 @@ class RPFrameworkDeviceResponse(object):
 			# effects will be executed!)
 			if effect.updateExecCondition is not None and effect.updateExecCondition != "":
 				# this should eval to a boolean value
-				if not eval(rpPlugin.substituteIndigoValues(effect.updateExecCondition, rpDevice, dict())):
+				if not eval(rpPlugin.substitute_indigo_values(effect.updateExecCondition, rpDevice, dict())):
 					rpPlugin.logger.threaddebug(f"Execute condition failed for response, skipping execution for effect: {effect.effectType}")
 					continue
 		
