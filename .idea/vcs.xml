@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="VcsDirectoryMappings">
+    <mapping directory="" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/../indigo-plugins-dayton-audio" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/../indigo-plugins-nilesaudio" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/../indigo-plugins-onkyo-receiver" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/../indigo-plugins-plex-server-manager" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/../indigo-plugins-sony-tv" vcs="Git" />
+  </component>
+</project>

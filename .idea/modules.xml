@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="ProjectModuleManager">
+    <modules>
+      <module fileurl="file://$PROJECT_DIR$/../indigo-plugins-dayton-audio/.idea/indigo-plugins-dayton-audio.iml" filepath="$PROJECT_DIR$/../indigo-plugins-dayton-audio/.idea/indigo-plugins-dayton-audio.iml" />
+      <module fileurl="file://$PROJECT_DIR$/../indigo-plugins-googleclients/.idea/indigo-plugins-googleclients.iml" filepath="$PROJECT_DIR$/../indigo-plugins-googleclients/.idea/indigo-plugins-googleclients.iml" />
+      <module fileurl="file://$PROJECT_DIR$/../indigo-plugins-nilesaudio/.idea/indigo-plugins-nilesaudio.iml" filepath="$PROJECT_DIR$/../indigo-plugins-nilesaudio/.idea/indigo-plugins-nilesaudio.iml" />
+      <module fileurl="file://$PROJECT_DIR$/../indigo-plugins-onkyo-receiver/.idea/indigo-plugins-onkyo-receiver.iml" filepath="$PROJECT_DIR$/../indigo-plugins-onkyo-receiver/.idea/indigo-plugins-onkyo-receiver.iml" />
+      <module fileurl="file://$PROJECT_DIR$/../indigo-plugins-plex-server-manager/.idea/indigo-plugins-plex-server-manager.iml" filepath="$PROJECT_DIR$/../indigo-plugins-plex-server-manager/.idea/indigo-plugins-plex-server-manager.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/indigo-plugins-rpframework-src.iml" filepath="$PROJECT_DIR$/.idea/indigo-plugins-rpframework-src.iml" />
+      <module fileurl="file://$PROJECT_DIR$/../indigo-plugins-sony-tv/.idea/indigo-plugins-sony-tv.iml" filepath="$PROJECT_DIR$/../indigo-plugins-sony-tv/.idea/indigo-plugins-sony-tv.iml" />
+    </modules>
+  </component>
+</project>
