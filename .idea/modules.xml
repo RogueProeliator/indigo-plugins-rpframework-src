@@ -7,6 +7,7 @@
       <module fileurl="file://$PROJECT_DIR$/../indigo-plugins-nilesaudio/.idea/indigo-plugins-nilesaudio.iml" filepath="$PROJECT_DIR$/../indigo-plugins-nilesaudio/.idea/indigo-plugins-nilesaudio.iml" />
       <module fileurl="file://$PROJECT_DIR$/../indigo-plugins-onkyo-receiver/.idea/indigo-plugins-onkyo-receiver.iml" filepath="$PROJECT_DIR$/../indigo-plugins-onkyo-receiver/.idea/indigo-plugins-onkyo-receiver.iml" />
       <module fileurl="file://$PROJECT_DIR$/../indigo-plugins-plex-server-manager/.idea/indigo-plugins-plex-server-manager.iml" filepath="$PROJECT_DIR$/../indigo-plugins-plex-server-manager/.idea/indigo-plugins-plex-server-manager.iml" />
+      <module fileurl="file://$PROJECT_DIR$/../indigo-plugins-roku/.idea/indigo-plugins-roku.iml" filepath="$PROJECT_DIR$/../indigo-plugins-roku/.idea/indigo-plugins-roku.iml" />
       <module fileurl="file://$PROJECT_DIR$/.idea/indigo-plugins-rpframework-src.iml" filepath="$PROJECT_DIR$/.idea/indigo-plugins-rpframework-src.iml" />
       <module fileurl="file://$PROJECT_DIR$/../indigo-plugins-sony-tv/.idea/indigo-plugins-sony-tv.iml" filepath="$PROJECT_DIR$/../indigo-plugins-sony-tv/.idea/indigo-plugins-sony-tv.iml" />
     </modules>
