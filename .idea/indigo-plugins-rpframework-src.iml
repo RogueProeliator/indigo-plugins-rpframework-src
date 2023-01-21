@@ -13,5 +13,9 @@
     <orderEntry type="module" module-name="indigo-plugins-onkyo-receiver" />
     <orderEntry type="module" module-name="indigo-plugins-plex-server-manager" />
     <orderEntry type="module" module-name="indigo-plugins-roku" />
+    <orderEntry type="module" module-name="indigo-plugins-rpframework-pytest" />
+  </component>
+  <component name="TestRunnerService">
+    <option name="PROJECT_TEST_RUNNER" value="py.test" />
   </component>
 </module>

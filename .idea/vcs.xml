@@ -7,6 +7,7 @@
     <mapping directory="$PROJECT_DIR$/../indigo-plugins-onkyo-receiver" vcs="Git" />
     <mapping directory="$PROJECT_DIR$/../indigo-plugins-plex-server-manager" vcs="Git" />
     <mapping directory="$PROJECT_DIR$/../indigo-plugins-roku" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/../indigo-plugins-rpframework-pytest" vcs="Git" />
     <mapping directory="$PROJECT_DIR$/../indigo-plugins-sony-tv" vcs="Git" />
   </component>
 </project>
