@@ -1,12 +1,11 @@
 #! /usr/bin/env python
 # -*- coding: utf-8 -*-
-# /////////////////////////////////////////////////////////////////////////////////////////
+#######################################################################################
 # RPFrameworkPlugin by RogueProeliator <adam.d.ashe@gmail.com>
-# 	Base class for all RogueProeliator's plugins for Perceptive Automation's Indigo
-#	home automation software.
-# /////////////////////////////////////////////////////////////////////////////////////////
+# Base class for all RogueProeliator's plugins for Perceptive Automation's Indigo
+# home automation software.
+#######################################################################################
 
-# /////////////////////////////////////////////////////////////////////////////////////////
 # region Python Imports
 from __future__ import absolute_import
 import logging
@@ -32,11 +31,10 @@ from .RPFrameworkNetworkingUPnP import uPnPDiscover
 from .RPFrameworkUtils          import to_str
 from .RPFrameworkUtils          import to_unicode
 
-#endregion
-#/////////////////////////////////////////////////////////////////////////////////////////
+# endregion
 
-# /////////////////////////////////////////////////////////////////////////////////////////
 # region Constants and configuration variables
+
 GUI_CONFIG_PLUGINSETTINGS                        = "plugin"
 GUI_CONFIG_PLUGIN_COMMANDQUEUEIDLESLEEP          = "pluginCommandQueueIdleSleep"
 GUI_CONFIG_PLUGIN_DEBUG_SHOWUPNPOPTION           = "showUPnPDebug"
@@ -67,41 +65,35 @@ DEBUGLEVEL_NONE                                  = 0		# no .debug() logs will be
 DEBUGLEVEL_LOW                                   = 1		# show .debug() logs in the Indigo log
 DEBUGLEVEL_HIGH                                  = 2		# show .ThreadDebug() log calls in the Indigo log
 
-#endregion
-# /////////////////////////////////////////////////////////////////////////////////////////
+# endregion
 
 
-# /////////////////////////////////////////////////////////////////////////////////////////
-# RPFrameworkPlugin
-#	Base class for Indigo plugins that provides standard functionality such as version
-#	checking and validation functions
-# /////////////////////////////////////////////////////////////////////////////////////////
 class RPFrameworkPlugin(indigo.PluginBase):
 
-	# /////////////////////////////////////////////////////////////////////////////////////
+	#######################################################################################
 	# region Class construction and destruction methods
 	# -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-	# Constructor called once upon plugin class creation; setup the basic functionality
+	# Constructor called once upon plugin class creation; set up the basic functionality
 	# common to all plugins based on the framework
 	# -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-	def __init__(self, pluginId, pluginDisplayName, pluginVersion, pluginPrefs, managedDeviceClassModule=None, pluginSupportsUPNP=False):
+	def __init__(self, plugin_id, plugin_display_name, plugin_version, plugin_prefs, managed_device_class_module=None, supports_upnp=False):
 		# flag the plugin as undergoing initialization so that we know the full
 		# indigo plugin is not yet available
 		self.plugin_initializing = True
-		self.supports_upnp_debug = pluginSupportsUPNP
+		self.supports_upnp_debug = supports_upnp
 
 		# call the base class' initialization to begin setup...
-		super().__init__(pluginId, pluginDisplayName, pluginVersion, pluginPrefs)
+		super().__init__(plugin_id, plugin_display_name, plugin_version, plugin_prefs)
 
 		# set up a custom logging format to make it easier to look through (this applies only to the plugin's
 		# individual file handler
-		logging_format_string = logging.Formatter('%(asctime)s.%(msecs)03d\t%(levelname)-12s\t%(name)s.%(funcName)-25s %(msg)s', datefmt='%Y-%m-%d %H:%M:%S')
+		logging_format_string = logging.Formatter("%(asctime)s.%(msecs)03d\t%(levelname)-12s\t%(name)s.%(funcName)-25s %(msg)s", datefmt="%Y-%m-%d %H:%M:%S")
 		self.plugin_file_handler.setFormatter(logging_format_string)
 
 		# determine what the user has set for the debug level; this will determine how we set
 		# the python logging to show in the event log
 		try:
-			self.debugLevel = int(pluginPrefs.get("debugLevel", DEBUGLEVEL_NONE))
+			self.debugLevel = int(plugin_prefs.get("debugLevel", DEBUGLEVEL_NONE))
 			if self.debugLevel < 0 or self.debugLevel > 2:
 				self.debugLevel = DEBUGLEVEL_NONE
 		except:
@@ -121,7 +113,7 @@ class RPFrameworkPlugin(indigo.PluginBase):
 		# create the generic device dictionary which will store a reference to each device that
 		# is defined in indigo; the ID mapping will map the deviceTypeId to a class name
 		self.managed_devices           = dict()
-		self.managed_dev_class_module  = managedDeviceClassModule
+		self.managed_dev_class_module  = managed_device_class_module
 		self.managed_dev_class_mapping = dict()
 		self.managed_dev_params        = dict()
 		self.managed_dev_gui_configs   = dict()
@@ -148,13 +140,13 @@ class RPFrameworkPlugin(indigo.PluginBase):
 
 		# parse the RPFramework plugin configuration XML provided for this plugin,
 		# if it is present
-		self.parse_framework_config(pluginDisplayName.replace(" Plugin", ""))
+		self.parse_framework_config(plugin_display_name.replace(" Plugin", ""))
 
 		# perform any upgrade steps if the plugin is running for the first time after
 		# an upgrade
-		old_plugin_version = pluginPrefs.get("loadedPluginVersion", "")
-		if old_plugin_version != to_unicode(pluginVersion):
-			self.perform_plugin_upgrade_maintenance(old_plugin_version, to_unicode(pluginVersion))
+		old_plugin_version = plugin_prefs.get("loadedPluginVersion", "")
+		if old_plugin_version != to_unicode(plugin_version):
+			self.perform_plugin_upgrade_maintenance(old_plugin_version, to_unicode(plugin_version))
 
 		# initialization is complete...
 		self.plugin_initializing = False
@@ -360,10 +352,10 @@ class RPFrameworkPlugin(indigo.PluginBase):
 
 		return rp_param
 
-	#endregion
-	# /////////////////////////////////////////////////////////////////////////////////////
+	# endregion
+	#######################################################################################
 
-	# /////////////////////////////////////////////////////////////////////////////////////
+	#######################################################################################
 	# region Indigo control methods
 	# -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 	# startup is called by Indigo whenever the plugin is first starting up (by a restart
@@ -372,17 +364,17 @@ class RPFrameworkPlugin(indigo.PluginBase):
 	def startup(self):
 		pass
 
-	#-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+	# -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 	# shutdown is called by Indigo whenever the entire plugin is being shut down from
 	# being disabled, during an update process or if the server is being shut down
-	#-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+	# -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 	def shutdown(self):
 		pass
 
-	#endregion
-	# /////////////////////////////////////////////////////////////////////////////////////
+	# endregion
+	#######################################################################################
 
-	# /////////////////////////////////////////////////////////////////////////////////////
+	#######################################################################################
 	# region Indigo device life-cycle call-back routines
 	# -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 	# This routine is called whenever the plugin should be connecting / communicating with
@@ -500,9 +492,9 @@ class RPFrameworkPlugin(indigo.PluginBase):
 		return False
 
 	# endregion
-	# /////////////////////////////////////////////////////////////////////////////////////
+	#######################################################################################
 
-	# /////////////////////////////////////////////////////////////////////////////////////
+	#######################################################################################
 	# region Asynchronous processing routines
 	# -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 	# This routine will run the concurrent processing thread used at the plugin (not
@@ -525,8 +517,8 @@ class RPFrameworkPlugin(indigo.PluginBase):
 					command = self.plugin_command_queue.get()
 					if command.commandName == RPFrameworkCommand.CMD_DEVICE_RECONNECT:
 						# the command payload will be in the form of a tuple:
-						#	(DeviceID, DeviceInstanceIdentifier, ReconnectTime)
-						#	ReconnectTime is the datetime where the next reconnection attempt should occur
+						# (DeviceID, DeviceInstanceIdentifier, ReconnectTime)
+						# ReconnectTime is the datetime where the next reconnection attempt should occur
 						time_now = time.time()
 						if time_now > command.commandPayload[2]:
 							if command.commandPayload[0] in self.managed_devices:
@@ -568,42 +560,42 @@ class RPFrameworkPlugin(indigo.PluginBase):
 			# that we need to process
 			pass
 
-	#-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+	# -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 	# This routine will be called to handle any unknown commands at the plugin level; it
 	# can/should be overridden in the plugin implementation (if needed)
-	#-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+	# -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 	def handle_unknown_plugin_command(self, rp_command, requeue_commands_list):
 		pass
 
-	#endregion
-	#/////////////////////////////////////////////////////////////////////////////////////
+	# endregion
+	#######################################################################################
 
-	#/////////////////////////////////////////////////////////////////////////////////////
-	#region Indigo definitions helper functions
-	#-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+	#######################################################################################
+	# region Indigo definitions helper functions
+	# -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 	# This routine will add a new action to the managed actions of the plugin
-	#-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+	# -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 	def add_indigo_action(self, indigo_action):
 		self.indigo_actions[indigo_action.indigoActionId] = indigo_action
 
-	#-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+	# -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 	# This routine will add a new device response to the list of responses that the plugin
 	# can automatically handle
-	#-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+	# -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 	def add_device_response_definition(self, device_type_id, response_dfn):
 		if not (device_type_id in self.device_response_defns):
 			self.device_response_defns[device_type_id] = list()
 		self.device_response_defns[device_type_id].append(response_dfn)
 
-	#endregion
-	#/////////////////////////////////////////////////////////////////////////////////////
+	# endregion
+	#######################################################################################
 
-	#/////////////////////////////////////////////////////////////////////////////////////
-	#region Data Validation Functions
-	#-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+	#######################################################################################
+	# region Data Validation Functions
+	# -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 	# This routine will be called to validate the information entered into the Plugin
 	# configuration file
-	#-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+	# -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 	def validatePrefsConfigUi(self, valuesDict):
 		# create an error message dictionary to hold validation issues foundDevice
 		error_messages = indigo.Dict()
@@ -621,9 +613,9 @@ class RPFrameworkPlugin(indigo.PluginBase):
 		else:
 			return False, valuesDict, error_messages
 
-	#-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+	# -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 	# This routine will be called when the user has closed the preference dialog
-	#-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+	# -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 	def closedPrefsConfigUi(self, valuesDict, userCancelled):
 		if not userCancelled:
 			try:
@@ -645,10 +637,10 @@ class RPFrameworkPlugin(indigo.PluginBase):
 			else:
 				self.logger.info("Debugging enabled... remember to turn off when done!")
 
-	#-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+	# -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 	# This routine will be called to validate the information entered into the Device
 	# configuration GUI from within Indigo (it will only validate registered params)
-	#-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+	# -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 	def validateDeviceConfigUi(self, valuesDict, device_type_id, devId):
 		# create an error message dictionary to hold any validation issues
 		# (and their messages) that we find
@@ -676,19 +668,19 @@ class RPFrameworkPlugin(indigo.PluginBase):
 		else:
 			return False, valuesDict, error_messages
 
-	#-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+	# -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 	# This routine will be called to validate any parameters not known to the plugin (not
 	# automatically handled and validated); this will only be called once all known
 	# parameters have been validated and it MUST return a valid tuple
-	#-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+	# -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 	def validateDeviceConfigUiEx(self, valuesDict, deviceTypeId, devId):
 		return True, valuesDict
 
-	#-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+	# -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 	# This routine will validate an action Config UI popup when it is being edited from
 	# within the Indigo client; if the action being validated is not a known action then
 	# a callback to the plugin implementation will be made
-	#-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+	# -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 	def validateActionConfigUi(self, valuesDict, typeId, actionId):
 		self.logger.threaddebug(f"Call to validate action: {typeId}")
 		if typeId in self.indigo_actions:
@@ -700,10 +692,10 @@ class RPFrameworkPlugin(indigo.PluginBase):
 		else:
 			return self.validateUnRegisteredActionConfigUi(valuesDict, typeId, actionId)
 
-	#-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+	# -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 	# This routine is called to retrieve a dynamic list of elements for an action (or
 	# other ConfigUI based) routine
-	#-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+	# -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 	def getConfigDialogMenu(self, filter=u'', valuesDict=None, typeId="", targetId=0):
 		# the routine is designed to pass the call along to the device since most of the
 		# time this is device-specific (such as inputs)
@@ -714,18 +706,18 @@ class RPFrameworkPlugin(indigo.PluginBase):
 			self.logger.debug(f"Call to getConfigDialogMenu for device not managed by this plugin")
 			return []
 
-	#-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+	# -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 	# This routine is called to retrieve a dynamic list of devices that are found on the
 	# network matching the service given by the filter
-	#-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+	# -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 	def getConfigDialogUPNPDeviceMenu(self, filter=u'', valuesDict=None, typeId=u'', targetId=0):
 		self.update_upnp_enumeration_list(typeId)
 		return self.parse_upnp_device_list(self.enumerated_devices)
 
-	#-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+	# -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 	# This routine is called whenever the user clicks the "Select" button on a device
 	# dialog that asks for selecting from an list of enumerated devices
-	#-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+	# -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 	def selectUPNPEnumeratedDeviceForUse(self, valuesDict, typeId, devId):
 		menu_field_id   = self.get_gui_config_value(typeId, GUI_CONFIG_UPNP_ENUMDEVICESFIELDID, "upnpEnumeratedDevices")
 		target_field_id = self.get_gui_config_value(typeId, GUI_CONFIG_UPNP_DEVICESELECTTARGETFIELDID, "httpAddress")
@@ -742,10 +734,10 @@ class RPFrameworkPlugin(indigo.PluginBase):
 
 		return valuesDict
 
-	#-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+	# -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 	# This routine is called to parse out a uPNP search results list in order to create_device_object
 	# an indigo-friendly menu; usually will be overridden in plugin descendants
-	#-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+	# -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 	def parse_upnp_device_list(self, deviceList):
 		try:
 			menu_items = []
@@ -757,16 +749,16 @@ class RPFrameworkPlugin(indigo.PluginBase):
 			self.logger.warning("Error parsing UPNP devices found on the network")
 			return []
 
-	#-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+	# -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 	# This routine should be overridden and should validate any actions which are not
 	# already defined within the plugin class
-	#-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+	# -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 	def validateUnRegisteredActionConfigUi(self, valuesDict, typeId, actionId):
 		return True, valuesDict
 
-	#-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+	# -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 	# This routine will validate whether or not an IP address is valid as a IPv4 addr
-	#-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+	# -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 	def is_ip_v4_valid(self, ip):
 		# Make sure a value was entered for the address... an IPv4 should require at least
 		# 7 characters (0.0.0.0)
@@ -791,16 +783,16 @@ class RPFrameworkPlugin(indigo.PluginBase):
 		# if we make it here, the input should be valid
 		return True
 
-	#endregion
-	#/////////////////////////////////////////////////////////////////////////////////////
+	# endregion
+	#######################################################################################
 
-	#/////////////////////////////////////////////////////////////////////////////////////
-	#region Action Execution Routines
-	#-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+	#######################################################################################
+	# region Action Execution Routines
+	# -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 	# This routine will do the work of processing/executing an action; it is assumed that
 	# the plugin developer will only assign the action callback to this routine if it
 	# should be handled
-	#-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+	# -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 	def execute_action(self, pluginAction, indigoActionId="", indigoDeviceId="", paramValues=None):
 		# ensure that the actionID specified by the action is a managed action that
 		# we can automatically handle
@@ -822,10 +814,10 @@ class RPFrameworkPlugin(indigo.PluginBase):
 		# that action now...
 		self.indigo_actions[indigoActionId].generateActionCommands(self, self.managed_devices[indigoDeviceId], paramValues)
 
-	#-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+	# -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 	# This routine will toggled the debug setting on all devices managed... it is used to
 	# allow setting the debug status w/o restarting the plugin
-	#-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+	# -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 	def toggle_debug_enabled(self):
 		if self.debugLevel == DEBUGLEVEL_NONE:
 			self.debugLevel = DEBUGLEVEL_LOW
@@ -839,10 +831,10 @@ class RPFrameworkPlugin(indigo.PluginBase):
 			self.logger.info("Debug disabled by user")
 		self.savePluginPrefs()
 
-	#-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+	# -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 	# This routine will be called when the user has created a request to log the UPnP
 	# debug information to the Indigo log
-	#-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+	# -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 	def log_upnp_devices_found(self, valuesDict, typeId):
 		# perform validation here... only real requirement is to have a "type" selected
 		# and this should always be the case...
@@ -856,10 +848,10 @@ class RPFrameworkPlugin(indigo.PluginBase):
 		# return to the dialog to allow it to close
 		return True, valuesDict, errors_dict
 
-	#-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+	# -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 	# This routine processing the logging of the UPnP devices once the plugin spools the
 	# command on the background thread
-	#-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+	# -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 	def log_upnp_devices_found_processing(self):
 		try:
 			# perform the UPnP search and logging now...
@@ -898,10 +890,10 @@ class RPFrameworkPlugin(indigo.PluginBase):
 		except:
 			self.logger.error("Error generating UPnP report")
 
-	#-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+	# -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 	# This routine will be called whenever the user has chosen to dump the device details
 	# to the event log via the menuitem action
-	#-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+	# -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 	def dump_device_details_to_log(self, valuesDict, typeId):
 		errors_dict     = indigo.Dict()
 		devices_to_dump = valuesDict.get("devicesToDump", None)
@@ -916,10 +908,10 @@ class RPFrameworkPlugin(indigo.PluginBase):
 				self.logger.info(to_unicode(dump_dev))
 			return True, valuesDict, errors_dict
 
-	#-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+	# -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 	# This routine provides the callback for devices based off a Dimmer... since the call
 	# comes into the plugin we will pass it off the device now
-	#-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+	# -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 	def actionControlDimmerRelay(self, action, dev):
 		# transform this action into our standard "execute_action" parameters so that the
 		# action is processed in a standard way
@@ -934,15 +926,15 @@ class RPFrameworkPlugin(indigo.PluginBase):
 
 		self.execute_action(None, indigo_action_id, indigo_device_id, param_values)
 
-	#endregion
-	#/////////////////////////////////////////////////////////////////////////////////////
+	# endregion
+	#######################################################################################
 
-	#/////////////////////////////////////////////////////////////////////////////////////
-	#region Helper Routines
-	#-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+	#######################################################################################
+	# region Helper Routines
+	# -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 	# This routine will perform a substitution on a string for all Indigo-values that
 	# may be substituted (variables, devices, states, parameters, etc.)
-	#-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+	# -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 	def substitute_indigo_values(self, input_str, rp_device, action_param_values):
 		substituted_string = input_str
 		if substituted_string is None:
@@ -991,19 +983,19 @@ class RPFrameworkPlugin(indigo.PluginBase):
 		# return the new string to the caller
 		return substituted_string
 
-	#-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+	# -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 	# This routine will set a GUI configuration value given the device type, the key and
 	# the value for the device
-	#-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+	# -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 	def put_gui_config_value(self, device_type_id, config_key, config_value):
 		if device_type_id not in self.managed_dev_gui_configs:
 			self.managed_dev_gui_configs[device_type_id] = dict()
 		self.managed_dev_gui_configs[device_type_id][config_key] = config_value
 
-	#-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+	# -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 	# This routine will retrieve a GUI config value for a device type and key; it allows
 	# passing in a default value in case the value is not found in the settings
-	#-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+	# -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 	def get_gui_config_value(self, device_type_id, config_key, default_value=""):
 		if device_type_id not in self.managed_dev_gui_configs:
 			return default_value
@@ -1013,19 +1005,19 @@ class RPFrameworkPlugin(indigo.PluginBase):
 			self.logger.threaddebug(f"Returning default GUIConfigValue for {device_type_id}: {config_key}")
 			return default_value
 
-	#-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+	# -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 	# This routine will retrieve the list of device response definitions for the given
 	# device type
-	#-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+	# -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 	def get_device_response_definitions(self, device_type_id):
 		if device_type_id in self.device_response_defns:
 			return self.device_response_defns[device_type_id]
 		else:
 			return ()
 
-	#-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+	# -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 	# This routine will update the enumeratedDevices list of devices from the uPNP
-	#-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+	# -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 	def update_upnp_enumeration_list(self, device_type_id):
 		u_pnp_cache_time = int(self.get_gui_config_value(device_type_id, GUI_CONFIG_UPNP_CACHETIMESEC, "180"))
 		if time.time() > self.last_device_enumeration + u_pnp_cache_time or len(self.enumerated_devices) == 0:
@@ -1037,11 +1029,11 @@ class RPFrameworkPlugin(indigo.PluginBase):
 			self.enumerated_devices     = discovered_devices
 			self.last_device_enumeration = time.time()
 
-	#-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+	# -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 	# This routine will get the full path to a file with the given name inside the plugin
 	# directory; note this is specifically returning a string, not unicode, to allow
 	# use of the IO libraries which require ascii
-	#-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+	# -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 	def get_plugin_directory_file_path(self, file_name, plugin_name=None):
 		if plugin_name is None:
 			plugin_name = self.pluginDisplayName.replace(" Plugin", "")
@@ -1050,10 +1042,10 @@ class RPFrameworkPlugin(indigo.PluginBase):
 		requested_file_path = os.path.join(indigo_base_path, f"Plugins/{plugin_name}.indigoPlugin/Contents/Server Plugin/{file_name}")
 		return f"{requested_file_path}"
 
-	#-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+	# -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 	# This routine is called whenever the plugin is updating from an older version, as
 	# determined by the plugin property and plugin version number
-	#-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+	# -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 	def perform_plugin_upgrade_maintenance(self, old_version, new_version):
 		if old_version == "":
 			self.logger.info(f"Performing first upgrade/run of version {new_version}")
@@ -1082,12 +1074,12 @@ class RPFrameworkPlugin(indigo.PluginBase):
 		self.savePluginPrefs()
 		self.logger.info(f"Completed plugin updating/installation for {new_version}")
 
-	#-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+	# -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 	# This routine may be used by plugins to perform any upgrades specific to the plugin;
 	# it will be called following the framework's update processing
-	#-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+	# -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 	def perform_plugin_upgrade(self, old_version, new_version):
 		pass
 
-	#endregion
-	#/////////////////////////////////////////////////////////////////////////////////////
+	# endregion
+	#######################################################################################
