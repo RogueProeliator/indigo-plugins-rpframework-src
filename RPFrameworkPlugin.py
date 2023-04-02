@@ -172,7 +172,7 @@ class RPFrameworkPlugin(indigo.PluginBase):
 					for pluginParam in plugin_param_node:
 						rp_plugin_param = self.read_indigo_param_node(pluginParam)
 						self.plugin_config_params.append(rp_plugin_param)
-						self.logger.threaddebug(f"Found plugin param: {rp_plugin_param.indigoId}")
+						self.logger.threaddebug(f"Found plugin param: {rp_plugin_param.indigo_id}")
 
 				# read in any plugin-level guiConfigSettings
 				plugin_gui_config_node = plugin_config_node.find("guiConfiguration")
@@ -201,11 +201,11 @@ class RPFrameworkPlugin(indigo.PluginBase):
 
 						# process all the parameters for this device
 						device_params_node = deviceDfn.find("params")
-						if device_params_node != None:
+						if device_params_node is not None:
 							params_list = list()
 							for device_param in device_params_node.findall("param"):
 								rp_dev_param = self.read_indigo_param_node(device_param)
-								self.logger.threaddebug(f"Created device parameter for managed device '{indigo_device_id}': {rp_dev_param.indigoId}")
+								self.logger.threaddebug(f"Created device parameter for managed device '{indigo_device_id}': {rp_dev_param.indigo_id}")
 								params_list.append(rp_dev_param)
 							self.managed_dev_params[indigo_device_id] = params_list
 
@@ -253,7 +253,7 @@ class RPFrameworkPlugin(indigo.PluginBase):
 											effect_exec_condition = to_unicode(effect_exec_condition_node.text)
 
 										self.logger.threaddebug(f"Found response effect: Type={effect_type}; Param: {effect_update_param}; ValueFormat={effect_value_format}; ValueFormatEx={effect_value_format_ex_val}; Eval={effect_value_eval_result}; Condition={effect_exec_condition}")
-										dev_response_defn.addResponseEffect(RPFrameworkDeviceResponseEffect(effect_type, effect_update_param, effect_value_format, effect_value_format_ex_val, effect_value_eval_result, effect_exec_condition))
+										dev_response_defn.add_response_effect(RPFrameworkDeviceResponseEffect(effect_type, effect_update_param, effect_value_format, effect_value_format_ex_val, effect_value_eval_result, effect_exec_condition))
 
 								# add the definition to the plugin's list of response definitions
 								self.add_device_response_definition(indigo_device_id, dev_response_defn)
@@ -296,7 +296,7 @@ class RPFrameworkPlugin(indigo.PluginBase):
 							self.logger.threaddebug(f"Processing {len(params_node)} params for action")
 							for actionParam in params_node.findall("param"):
 								rp_param = self.read_indigo_param_node(actionParam)
-								self.logger.threaddebug(f"Created parameter for managed action '{rp_action.indigoActionId}': {rp_param.indigoId}")
+								self.logger.threaddebug(f"Created parameter for managed action '{rp_action.indigoActionId}': {rp_param.indigo_id}")
 								rp_action.addIndigoParameter(rp_param)
 						self.add_indigo_action(rp_action)
 				self.logger.debug("Successfully completed processing of RPFrameworkConfig.xml file")
@@ -313,42 +313,42 @@ class RPFrameworkPlugin(indigo.PluginBase):
 		param_indigo_id   = to_unicode(param_node.get("indigoId"))
 		param_type        = eval(f"RPFrameworkIndigoParamDefn.{param_node.get('paramType')}")
 		param_is_required = (param_node.get("isRequired").lower() == "true")
-		rp_param          = RPFrameworkIndigoParamDefn(param_indigo_id, param_type, isRequired=param_is_required)
+		rp_param          = RPFrameworkIndigoParamDefn(param_indigo_id, param_type, is_required=param_is_required)
 
 		min_value_node = param_node.find("minValue")
 		if min_value_node is not None:
 			min_value_string = min_value_node.text
-			if rp_param.paramType == RPFrameworkIndigoParamDefn.ParamTypeFloat:
-				rp_param.minValue = float(min_value_string)
+			if rp_param.param_type == RPFrameworkIndigoParamDefn.ParamTypeFloat:
+				rp_param.min_value = float(min_value_string)
 			else:
-				rp_param.minValue = int(min_value_string)
+				rp_param.min_value = int(min_value_string)
 
 		max_value_node = param_node.find("maxValue")
 		if max_value_node is not None:
 			max_value_string = max_value_node.text
-			if rp_param.paramType == RPFrameworkIndigoParamDefn.ParamTypeFloat:
-				rp_param.maxValue = float(max_value_string)
+			if rp_param.param_type == RPFrameworkIndigoParamDefn.ParamTypeFloat:
+				rp_param.max_value = float(max_value_string)
 			else:
-				rp_param.maxValue = int(max_value_string)
+				rp_param.max_value = int(max_value_string)
 
 		validation_expression_node = param_node.find("validationExpression")
 		if validation_expression_node is not None:
-			rp_param.validationExpression = to_unicode(validation_expression_node.text)
+			rp_param.validation_expression = to_unicode(validation_expression_node.text)
 
 		default_value_node = param_node.find("defaultValue")
 		if default_value_node is not None:
-			if rp_param.paramType == RPFrameworkIndigoParamDefn.ParamTypeFloat:
-				rp_param.defaultValue = float(default_value_node.text)
-			elif rp_param.paramType == RPFrameworkIndigoParamDefn.ParamTypeInteger:
-				rp_param.defaultValue = int(default_value_node.text)
-			elif rp_param.paramType == RPFrameworkIndigoParamDefn.ParamTypeBoolean:
-				rp_param.defaultValue = (default_value_node.text.lower() == "true")
+			if rp_param.param_type == RPFrameworkIndigoParamDefn.ParamTypeFloat:
+				rp_param.default_value = float(default_value_node.text)
+			elif rp_param.param_type == RPFrameworkIndigoParamDefn.ParamTypeInteger:
+				rp_param.default_value = int(default_value_node.text)
+			elif rp_param.param_type == RPFrameworkIndigoParamDefn.ParamTypeBoolean:
+				rp_param.default_value = (default_value_node.text.lower() == "true")
 			else:
-				rp_param.defaultValue = default_value_node.text
+				rp_param.default_value = default_value_node.text
 
 		invalid_message_node = param_node.find("invalidValueMessage")
 		if invalid_message_node is not None:
-			rp_param.invalidValueMessage = to_unicode(invalid_message_node.text)
+			rp_param.invalid_value_message = to_unicode(invalid_message_node.text)
 
 		return rp_param
 
@@ -386,7 +386,7 @@ class RPFrameworkPlugin(indigo.PluginBase):
 		# create the plugin device object and add it to the managed list
 		new_device_object             = self.create_device_object(dev)
 		self.managed_devices[dev.id]   = new_device_object
-		new_device_object.initiateCommunications()
+		new_device_object.initiate_communications()
 
 		# this object may be a child object... if it is then we need to see if its
 		# parent has already been created (and if so add it to that parent)
@@ -397,7 +397,7 @@ class RPFrameworkPlugin(indigo.PluginBase):
 			self.logger.threaddebug(f"Found parent ID of device {dev.id}: {parent_device_id}")
 			if parent_device_id in self.managed_devices:
 				self.logger.threaddebug("Parent object found, adding this child device now")
-				self.managed_devices[parent_device_id].addChildDevice(new_device_object)
+				self.managed_devices[parent_device_id].add_child_device(new_device_object)
 
 		# this object could be a parent object whose children have already been created; we need to add those children
 		# to this parent object now
@@ -405,7 +405,7 @@ class RPFrameworkPlugin(indigo.PluginBase):
 			found_device = self.managed_devices[found_device_id]
 			if self.get_gui_config_value(found_device.indigoDevice.deviceTypeId, GUI_CONFIG_ISCHILDDEVICEID, "false").lower() == "true" and int(found_device.indigoDevice.pluginProps[self.get_gui_config_value(found_device.indigoDevice.deviceTypeId, GUI_CONFIG_PARENTDEVICEIDPROPERTYNAME, "")]) == dev.id:
 				self.logger.threaddebug(f"Found previously-created child object for parent; child ID: {found_device.indigoDevice.id}")
-				new_device_object.addChildDevice(found_device)
+				new_device_object.add_child_device(found_device)
 
 		self.logger.debug(f"Exiting deviceStartComm for {dev.name}")
 
@@ -438,10 +438,10 @@ class RPFrameworkPlugin(indigo.PluginBase):
 			parent_device_id = int(dev.pluginProps[self.get_gui_config_value(dev.deviceTypeId, GUI_CONFIG_PARENTDEVICEIDPROPERTYNAME, "")])
 			if parent_device_id in self.managed_devices:
 				self.logger.threaddebug(f"Removing device from parent ID: {parent_device_id}")
-				self.managed_devices[parent_device_id].removeChildDevice(self.managed_devices[dev.id])
+				self.managed_devices[parent_device_id].remove_child_device(self.managed_devices[dev.id])
 
 		# remove the primary managed object
-		self.managed_devices[dev.id].terminateCommunications()
+		self.managed_devices[dev.id].terminate_communications()
 		del self.managed_devices[dev.id]
 
 		self.logger.debug(f"Exiting deviceStopComm for {dev.name}")
@@ -515,24 +515,24 @@ class RPFrameworkPlugin(indigo.PluginBase):
 					# the command name will identify what action should be taken...
 					re_queue_command = False
 					command = self.plugin_command_queue.get()
-					if command.commandName == RPFrameworkCommand.CMD_DEVICE_RECONNECT:
+					if command.command_name == RPFrameworkCommand.CMD_DEVICE_RECONNECT:
 						# the command payload will be in the form of a tuple:
 						# (DeviceID, DeviceInstanceIdentifier, ReconnectTime)
 						# ReconnectTime is the datetime where the next reconnection attempt should occur
 						time_now = time.time()
-						if time_now > command.commandPayload[2]:
-							if command.commandPayload[0] in self.managed_devices:
-								if self.managed_devices[command.commandPayload[0]].deviceInstanceIdentifier == command.commandPayload[1]:
-									self.logger.debug(f"Attempting reconnection to device {command.commandPayload[0]}")
-									self.managed_devices[command.commandPayload[0]].initiateCommunications()
+						if time_now > command.command_payload[2]:
+							if command.command_payload[0] in self.managed_devices:
+								if self.managed_devices[command.command_payload[0]].device_instance_identifier == command.command_payload[1]:
+									self.logger.debug(f"Attempting reconnection to device {command.command_payload[0]}")
+									self.managed_devices[command.command_payload[0]].initiate_communications()
 								else:
-									self.logger.threaddebug(f"Ignoring reconnection command for device {command.commandPayload[0]}; new instance detected")
+									self.logger.threaddebug(f"Ignoring reconnection command for device {command.command_payload[0]}; new instance detected")
 							else:
-								self.logger.debug(f"Ignoring reconnection command for device {command.commandPayload[0]}; device not created")
+								self.logger.debug(f"Ignoring reconnection command for device {command.command_payload[0]}; device not created")
 						else:
 							re_queue_command = True
 
-					elif command.commandName == RPFrameworkCommand.CMD_DEBUG_LOGUPNPDEVICES:
+					elif command.command_name == RPFrameworkCommand.CMD_DEBUG_LOGUPNPDEVICES:
 						# kick off the UPnP discovery and logging now
 						self.log_upnp_devices_found_processing()
 
@@ -602,10 +602,10 @@ class RPFrameworkPlugin(indigo.PluginBase):
 
 		# check each defined parameter, if any exist...
 		for param in self.plugin_config_params:
-			if param.indigoId in valuesDict:
+			if param.indigo_id in valuesDict:
 				# a value is present for this parameter - validate it
-				if not param.isValueValid(valuesDict[param.indigoId]):
-					error_messages[param.indigoId] = param.invalidValueMessage
+				if not param.is_value_valid(valuesDict[param.indigo_id]):
+					error_messages[param.indigo_id] = param.invalid_value_message
 
 		# return the validation results...
 		if len(error_messages) == 0:
@@ -649,13 +649,13 @@ class RPFrameworkPlugin(indigo.PluginBase):
 		# loop through each parameter for this device and validate one-by-one
 		if device_type_id in self.managed_dev_params:
 			for param in self.managed_dev_params[device_type_id]:
-				if param.indigoId in valuesDict:
+				if param.indigo_id in valuesDict:
 					# a parameter value is present, validate it now
-					if not param.isValueValid(valuesDict[param.indigoId]):
-						error_messages[param.indigoId] = param.invalidValueMessage
+					if not param.is_value_valid(valuesDict[param.indigo_id]):
+						error_messages[param.indigo_id] = param.invalid_value_message
 
-				elif param.isRequired:
-					error_messages[param.indigoId] = param.invalidValueMessage
+				elif param.is_required:
+					error_messages[param.indigo_id] = param.invalid_value_message
 
 		# return the validation results...
 		if len(error_messages) == 0:

@@ -1,27 +1,16 @@
 #! /usr/bin/env python
 # -*- coding: utf-8 -*-
-#/////////////////////////////////////////////////////////////////////////////////////////
+#######################################################################################
 # RPFrameworkCommand by RogueProeliator <adam.d.ashe@gmail.com>
-# 	Class for all RogueProeliator's commands that request that an action be executed
-#	on a processing thread.
-#/////////////////////////////////////////////////////////////////////////////////////////
-
-#/////////////////////////////////////////////////////////////////////////////////////////
-#region Python Imports
-import sys
-#endregion
-#/////////////////////////////////////////////////////////////////////////////////////////
+# Class for all RogueProeliator's commands that request that an action be executed
+# on a processing thread.
+#######################################################################################
 
 
-#/////////////////////////////////////////////////////////////////////////////////////////
-# RPFrameworkCommand
-#	Class that allows communication of an action request between the plugin device and
-#	its processing thread that is executing the actions/requests/communications
-#/////////////////////////////////////////////////////////////////////////////////////////
 class RPFrameworkCommand(object):
 
-	#/////////////////////////////////////////////////////////////////////////////////////////
-	#region Constants and Configuration Variables
+	#######################################################################################
+	# region Constants and Configuration Variables
 	CMD_INITIALIZE_CONNECTION       = "INITIALIZECONNECTION"
 	CMD_TERMINATE_PROCESSING_THREAD = "TERMINATEPROCESSING"
 	CMD_PAUSE_PROCESSING            = "PAUSEPROCESSING"
@@ -35,34 +24,34 @@ class RPFrameworkCommand(object):
 
 	CMD_DEBUG_LOGUPNPDEVICES        = "LOGUPNPDEVICES"
 
-	#endregion
-	#/////////////////////////////////////////////////////////////////////////////////////////
+	# endregion
+	#######################################################################################
 	
-	#/////////////////////////////////////////////////////////////////////////////////////
-	#region Construction and Destruction Methods
-	#-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+	#######################################################################################
+	# region Construction and Destruction Methods
+	# -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 	# Constructor allows passing in the data that makes up the command
-	#-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-	def __init__(self, commandName, commandPayload=None, postCommandPause=0.0, parentAction=u''):
-		self.commandName      = commandName
-		self.commandPayload   = commandPayload
-		self.postCommandPause = postCommandPause
-		self.parentAction     = parentAction
+	# -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+	def __init__(self, command_name, command_payload=None, post_command_pause=0.0, parent_action=""):
+		self.command_name       = command_name
+		self.command_payload    = command_payload
+		self.post_command_pause = post_command_pause
+		self.parent_action      = parent_action
 	
-	#endregion
-	#/////////////////////////////////////////////////////////////////////////////////////
+	# endregion
+	#######################################################################################
 		
-	#/////////////////////////////////////////////////////////////////////////////////////
-	#region Utility Methods
-	#-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+	#######################################################################################
+	# region Utility Methods
+	# -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 	# Routine to return a list for the payload, converting a string to a list using the
 	# provided delimiter when necessary
-	#-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-	def getPayloadAsList(self, delim=u'|*|'):
-		if isinstance(self.commandPayload, str) or isinstance(self.commandPayload, bytes):
-			return self.commandPayload.split(delim)
+	# -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+	def get_payload_as_list(self, delim="|*|"):
+		if isinstance(self.command_payload, str) or isinstance(self.command_payload, bytes):
+			return self.command_payload.split(delim)
 		else:
-			return self.commandPayload
+			return self.command_payload
 
-	#endregion
-	#/////////////////////////////////////////////////////////////////////////////////////
+	# endregion
+	#######################################################################################

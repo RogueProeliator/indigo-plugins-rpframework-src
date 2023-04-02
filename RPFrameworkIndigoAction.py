@@ -78,13 +78,13 @@ class RPFrameworkIndigoActionDfn(object):
 		
 		# loop through each parameter for this action and validate one-by-one
 		for param in self.indigoParams:
-			if param.indigoId in paramValues:
+			if param.indigo_id in paramValues:
 				# a parameter value is present, validate it now
-				if not param.isValueValid(paramValues[param.indigoId]):
-					error_messages[param.indigoId] = param.invalidValueMessage
+				if not param.is_value_valid(paramValues[param.indigo_id]):
+					error_messages[param.indigo_id] = param.invalid_value_message
 					
-			elif param.isRequired:
-				error_messages[param.indigoId] = param.invalidValueMessage
+			elif param.is_required:
+				error_messages[param.indigo_id] = param.invalid_value_message
 				
 		# return the validation results...
 		if len(error_messages) == 0:
@@ -113,7 +113,7 @@ class RPFrameworkIndigoActionDfn(object):
 		# and the values provided (these will be used during substitutions below)
 		resolved_values = dict()
 		for rpParam in self.indigoParams:
-			resolved_values[rpParam.indigoId] = paramValues.get(rpParam.indigoId, rpParam.defaultValue)
+			resolved_values[rpParam.indigo_id] = paramValues.get(rpParam.indigo_id, rpParam.default_value)
 
 		# generate the command for each of the ones defined for this action
 		commands_to_queue = []
@@ -154,7 +154,7 @@ class RPFrameworkIndigoActionDfn(object):
 		# if the execution made it here then the list of commands has been successfully built without
 		# error and may be queued up on the device
 		for commandForDevice in commands_to_queue:
-			rpDevice.queueDeviceCommand(commandForDevice)
+			rpDevice.queue_device_command(commandForDevice)
 
 	#endregion
 	#/////////////////////////////////////////////////////////////////////////////////////

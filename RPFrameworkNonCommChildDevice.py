@@ -46,10 +46,10 @@ class RPFrameworkNonCommChildDevice(RPFrameworkDevice):
 	#/////////////////////////////////////////////////////////////////////////////////////
 	# Disabled communications functions
 	#/////////////////////////////////////////////////////////////////////////////////////
-	def initiateCommunications(self):
-		super(RPFrameworkNonCommChildDevice, self).initiateCommunications(initializeConnect=False)
+	def initiate_communications(self):
+		super(RPFrameworkNonCommChildDevice, self).initiate_communications(initialize_connect=False)
 		
-	def terminateCommunications(self):
+	def terminate_communications(self):
 		pass
 	
 	#endregion
@@ -61,10 +61,10 @@ class RPFrameworkNonCommChildDevice(RPFrameworkDevice):
 	# Add new command to queue of the PARENT object... this must be obtained from the
 	# plugin...
 	#-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-	def queueDeviceCommand(self, command):
-		parent_device_id = int(self.indigoDevice.pluginProps[self.hostPlugin.get_gui_config_value(self.indigoDevice.deviceTypeId, RPFrameworkPlugin.GUI_CONFIG_PARENTDEVICEIDPROPERTYNAME, "")])
-		if parent_device_id in self.hostPlugin.managed_devices:
-			self.hostPlugin.managed_devices[parent_device_id].queueDeviceCommand(command)
+	def queue_device_command(self, command):
+		parent_device_id = int(self.indigoDevice.pluginProps[self.host_plugin.get_gui_config_value(self.indigoDevice.deviceTypeId, RPFrameworkPlugin.GUI_CONFIG_PARENTDEVICEIDPROPERTYNAME, "")])
+		if parent_device_id in self.host_plugin.managed_devices:
+			self.host_plugin.managed_devices[parent_device_id].queue_device_command(command)
 	
 	#endregion
 	#/////////////////////////////////////////////////////////////////////////////////////

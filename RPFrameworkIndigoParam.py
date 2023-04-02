@@ -1,15 +1,14 @@
 #! /usr/bin/env python
 # -*- coding: utf-8 -*-
-#/////////////////////////////////////////////////////////////////////////////////////////
+#######################################################################################
 # RPFrameworkIndigoParamDefn by RogueProeliator <adam.d.ashe@gmail.com>
-# 	This class stores the definition of a parameter coming from Indigo - for an action,
-#	device configuration, plugin configuration, etc. It is used so that the base classes
-#	may automatically handle parameter functions (such as validation) that normally would
-#	have to be written into each plugin
-#/////////////////////////////////////////////////////////////////////////////////////////
+# This class stores the definition of a parameter coming from Indigo - for an action,
+# device configuration, plugin configuration, etc. It is used so that the base classes
+# may automatically handle parameter functions (such as validation) that normally would
+# have to be written into each plugin
+#######################################################################################
 
-#/////////////////////////////////////////////////////////////////////////////////////////
-#region Python Imports
+# region Python Imports
 import os
 import re
 import sys
@@ -23,19 +22,13 @@ except:
 
 from .RPFrameworkUtils import to_str
 
-#endregion
-#/////////////////////////////////////////////////////////////////////////////////////////
+# endregion
 
-#/////////////////////////////////////////////////////////////////////////////////////////
-#/////////////////////////////////////////////////////////////////////////////////////////
-# RPFrameworkIndigoParamDefn
-#	This class stores the definition of a parameter coming from Indigo - for an action,
-#	device configuration, plugin configuration, etc.
-#/////////////////////////////////////////////////////////////////////////////////////////
-#/////////////////////////////////////////////////////////////////////////////////////////
+
 class RPFrameworkIndigoParamDefn(object):
-	#/////////////////////////////////////////////////////////////////////////////////////////
-	#region Constants and Configuration Variables
+
+	#######################################################################################
+	# region Constants and Configuration Variables
 	ParamTypeInteger         = 0
 	ParamTypeFloat           = 1
 	ParamTypeBoolean         = 2
@@ -45,81 +38,81 @@ class RPFrameworkIndigoParamDefn(object):
 	ParamTypeList            = 6
 	ParamTypeOSFilePath      = 7
 
-	#endregion
-	#/////////////////////////////////////////////////////////////////////////////////////////
+	# endregion
+	#######################################################################################
 	
-	#/////////////////////////////////////////////////////////////////////////////////////
-	#region Construction and Destruction Methods
-	#-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-	# Constructor allows passing in the data that makes up the definition of the paramType
+	#######################################################################################
+	# region Construction and Destruction Methods
+	# -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+	# Constructor allows passing in the data that makes up the definition of the param_type
 	# (with the type and ID being the only two required fields
-	#-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-	def __init__(self, indigoId, paramType, isRequired=False, defaultValue="", minValue=0, maxValue=2147483647, validationExpression=u'', invalidValueMessage=u''):
-		self.indigoId             = indigoId
-		self.paramType            = paramType
-		self.isRequired           = isRequired
-		self.defaultValue         = defaultValue
-		self.minValue             = minValue
-		self.maxValue             = maxValue
-		self.validationExpression = validationExpression
-		self.invalidValueMessage  = invalidValueMessage
+	# -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+	def __init__(self, indigo_id, param_type, is_required=False, default_value="", min_value=0, max_value=2147483647, validation_expression="", invalid_value_message=""):
+		self.indigo_id             = indigo_id
+		self.param_type            = param_type
+		self.is_required           = is_required
+		self.default_value         = default_value
+		self.min_value             = min_value
+		self.max_value             = max_value
+		self.validation_expression = validation_expression
+		self.invalid_value_message = invalid_value_message
 
-	#endregion
-	#/////////////////////////////////////////////////////////////////////////////////////
+	# endregion
+	#######################################################################################
 		
-	#/////////////////////////////////////////////////////////////////////////////////////
-	#region Validation Methods
-	#-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+	#######################################################################################
+	# region Validation Methods
+	# -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 	# This routine will return a boolean indicating if the provided value is valid
 	# according to the parameter type and configuration. It is assumed that the proposed
 	# value will always be a string!
-	#-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-	def isValueValid(self, proposedValue):
+	# -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+	def is_value_valid(self, proposed_value):
 		# if the value is required but empty then error here
-		if proposedValue == None or proposedValue == "":
-			return not self.isRequired
+		if proposed_value is None or proposed_value == "":
+			return not self.is_required
 		
 		# now validate that the type is correct...
-		if self.paramType == RPFrameworkIndigoParamDefn.ParamTypeInteger:
+		if self.param_type == RPFrameworkIndigoParamDefn.ParamTypeInteger:
 			try:
-				proposed_int_value = int(proposedValue)
-				if proposed_int_value < self.minValue or proposed_int_value > self.maxValue:
+				proposed_int_value = int(proposed_value)
+				if proposed_int_value < self.min_value or proposed_int_value > self.max_value:
 					raise "Param value not in range"
 				return True
 			except:
 				return False
 				
-		elif self.paramType == RPFrameworkIndigoParamDefn.ParamTypeFloat:
+		elif self.param_type == RPFrameworkIndigoParamDefn.ParamTypeFloat:
 			try:
-				proposed_flt_value = float(proposedValue)
-				if proposed_flt_value < self.minValue or proposed_flt_value > self.maxValue:
+				proposed_flt_value = float(proposed_value)
+				if proposed_flt_value < self.min_value or proposed_flt_value > self.max_value:
 					raise "Param value not in range"
 				return True
 			except:
 				return False
 				
-		elif self.paramType == RPFrameworkIndigoParamDefn.ParamTypeBoolean:
-			if type(proposedValue) is bool:
+		elif self.param_type == RPFrameworkIndigoParamDefn.ParamTypeBoolean:
+			if type(proposed_value) is bool:
 				return True
 			else:
-				return proposedValue.lower() == "true"
+				return proposed_value.lower() == "true"
 			
-		elif self.paramType == RPFrameworkIndigoParamDefn.ParamTypeOSDirectoryPath:
+		elif self.param_type == RPFrameworkIndigoParamDefn.ParamTypeOSDirectoryPath:
 			# validate that the path exists... and that it is a directory
-			return os.path.isdir(to_str(proposedValue))
+			return os.path.isdir(to_str(proposed_value))
 			
-		elif self.paramType == RPFrameworkIndigoParamDefn.ParamTypeOSFilePath:
+		elif self.param_type == RPFrameworkIndigoParamDefn.ParamTypeOSFilePath:
 			# validate that the file exists (and that it is a file)
-			return os.path.isfile(to_str(proposedValue))
+			return os.path.isfile(to_str(proposed_value))
 		
-		elif self.paramType == RPFrameworkIndigoParamDefn.ParamTypeIPAddress:
+		elif self.param_type == RPFrameworkIndigoParamDefn.ParamTypeIPAddress:
 			# validate the IP address using IPv4 standards for now...
-			return self.isIPv4Valid(to_str(proposedValue))
+			return self.is_i_pv4_valid(to_str(proposed_value))
 			
-		elif self.paramType == RPFrameworkIndigoParamDefn.ParamTypeList:
+		elif self.param_type == RPFrameworkIndigoParamDefn.ParamTypeList:
 			# validate that the list contains between the minimum and maximum
 			# number of entries
-			if len(proposedValue) < self.minValue or len(proposedValue) > self.maxValue:
+			if len(proposed_value) < self.min_value or len(proposed_value) > self.max_value:
 				return False
 			else:
 				return True
@@ -127,22 +120,22 @@ class RPFrameworkIndigoParamDefn(object):
 		else:
 			# default is a string value... so this will need to check against the
 			# validation expression, if set, and string length
-			if self.validationExpression != "":
-				if re.search(self.validationExpression, proposedValue, re.I) is None:
+			if self.validation_expression != "":
+				if re.search(self.validation_expression, proposed_value, re.I) is None:
 					return False
 					
-			str_length = len(proposedValue)
-			if str_length < self.minValue or str_length > self.maxValue:
+			str_length = len(proposed_value)
+			if str_length < self.min_value or str_length > self.max_value:
 				return False
 				
 			# if string processing makes it here then all is good
 			return True
 			
-	#-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+	# -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 	# This routine will validate whether or not an IP address is valid as a IPv4 addr
-	#-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-	def isIPv4Valid(self, ip):
-		# Make sure a value was entered for the address... an IPv4 should require at least
+	# -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+	def is_i_pv4_valid(self, ip):
+		# make sure a value was entered for the address... an IPv4 should require at least
 		# 7 characters (0.0.0.0)
 		if len(ip) < 7:
 			return False
@@ -164,5 +157,5 @@ class RPFrameworkIndigoParamDefn(object):
 		# if we make it here, the input should be valid
 		return True
 
-	#endregion
-	#/////////////////////////////////////////////////////////////////////////////////////
+	# endregion
+	#######################################################################################
