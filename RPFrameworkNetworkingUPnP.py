@@ -70,7 +70,8 @@ def uPnPDiscover(service, timeout=3, retries=1, logger=None):
         while True:
             try:
                 decoded_string = sock.recv(1024).decode()
-                logger.threaddebug(decoded_string)
+                if logger is not None:
+                    logger.threaddebug(decoded_string)
                 response = SSDPResponse(decoded_string)
                 responses.append(response)
             except socket.timeout:

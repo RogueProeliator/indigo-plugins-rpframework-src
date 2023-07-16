@@ -1021,7 +1021,7 @@ class RPFrameworkPlugin(indigo.PluginBase):
 		if time.time() > self.last_device_enumeration + u_pnp_cache_time or len(self.enumerated_devices) == 0:
 			service_id = self.get_gui_config_value(device_type_id, GUI_CONFIG_UPNP_SERVICE, "ssdp:all")
 			self.logger.debug(f"Performing uPnP search for: {service_id}")
-			discovered_devices = uPnPDiscover(service_id)
+			discovered_devices = uPnPDiscover(service_id, timeout=5, logger=self.logger)
 			self.logger.debug(f"Found {len(discovered_devices)} devices")
 
 			self.enumerated_devices     = discovered_devices
