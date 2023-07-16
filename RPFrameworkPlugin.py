@@ -842,7 +842,7 @@ class RPFrameworkPlugin(indigo.PluginBase):
 
 		# add a new command to the plugin's command queue for processing on a background
 		# thread (required to avoid Indigo timing out the operation!)
-		self.plugin_command_queue.put(RPFrameworkCommand.RPFrameworkCommand(RPFrameworkCommand.CMD_DEBUG_LOGUPNPDEVICES, commandPayload=None))
+		self.plugin_command_queue.put(RPFrameworkCommand(RPFrameworkCommand.CMD_DEBUG_LOGUPNPDEVICES, command_payload=None))
 		self.logger.info("Scheduled UPnP Device Search")
 
 		# return to the dialog to allow it to close
@@ -858,7 +858,7 @@ class RPFrameworkPlugin(indigo.PluginBase):
 			self.logger.debug("Beginning UPnP Device Search")
 			service_target         = "ssdp:all"
 			discovery_started      = time.time()
-			discovered_device_list = uPnPDiscover(service_target, timeout=6)
+			discovered_device_list = uPnPDiscover(service_target, timeout=6, logger=self.logger)
 
 			# create an HTML file that contains the details for all the devices found on the network
 			self.logger.debug("UPnP Device Search completed... creating output HTML")
@@ -869,10 +869,9 @@ class RPFrameworkPlugin(indigo.PluginBase):
 			# loop through each device found...
 			for device in discovered_device_list:
 				device_html += f"<div class='upnpDevice'><span class='fieldLabel'>Location:</span><a href='{device.location}' target='_blank'>{device.location}</a><br /><span class='fieldLabel'>USN:</span>{device.usn}<br /><span class='fieldLabel'>ST:</span>{device.st}<br /><span class='fieldLabel'>Cache Time:</span>{device.cache}s"
-				for header in device.allHeaders:
-					header_key = to_unicode(header[0])
+				for header_key in device.all_headers.keys():
 					if header_key != "location" and header_key != "usn" and header_key != "cache-control" and header_key != "st" and header_key != "ext":
-						device_html += f"<br /><span class='fieldLabel'>{header[0]}:</span>{header[1]}"
+						device_html += f"<br /><span class='fieldLabel'>{header_key}:</span>{device.all_headers[header_key]}"
 				device_html += "</div>"
 
 			device_html += "</body></html>"
@@ -881,14 +880,14 @@ class RPFrameworkPlugin(indigo.PluginBase):
 			self.logger.threaddebug("Writing UPnP Device Search HTML to file")
 			temp_filename          = self.get_plugin_directory_file_path("tmpUPnPDiscoveryResults.html")
 			upnp_results_html_file = open(temp_filename, 'w')
-			upnp_results_html_file.write(to_str(device_html))
+			upnp_results_html_file.write(device_html)
 			upnp_results_html_file.close()
 
 			# launch the file in a browser window via the command line
 			call(["open", temp_filename])
 			self.logger.info(f"Created UPnP results temporary file at {temp_filename}")
 		except:
-			self.logger.error("Error generating UPnP report")
+			self.logger.exception("Error generating UPnP report")
 
 	# -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 	# This routine will be called whenever the user has chosen to dump the device details
