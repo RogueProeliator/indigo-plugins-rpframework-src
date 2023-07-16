@@ -28,7 +28,6 @@ from .RPFrameworkDeviceResponse import RPFrameworkDeviceResponseEffect
 from .RPFrameworkIndigoAction   import RPFrameworkIndigoActionDfn
 from .RPFrameworkIndigoParam    import RPFrameworkIndigoParamDefn
 from .RPFrameworkNetworkingUPnP import uPnPDiscover
-from .RPFrameworkUtils          import to_str
 from .RPFrameworkUtils          import to_unicode
 
 # endregion

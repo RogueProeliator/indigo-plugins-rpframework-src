@@ -57,8 +57,7 @@ class SSDPResponse(object):
         self.all_headers = parsed_headers
 
     def __repr__(self):
-        return '<SSDPResponse(%(location)s, %(st)s, %(usn)s, %(server)s)>' % self.__dict__ + to_unicode(
-            self.all_headers) + '</SSDPResonse>'
+        return '<SSDPResponse(%(location)s, %(st)s, %(usn)s, %(server)s)>' % self.__dict__ + f"{self.all_headers}" + '</SSDPResonse>'
 
 
 def uPnPDiscover(service, timeout=3, retries=1, logger=None):
