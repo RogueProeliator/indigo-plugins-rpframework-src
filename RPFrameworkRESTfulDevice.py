@@ -394,10 +394,10 @@ class RPFrameworkRESTfulDevice(RPFrameworkDevice):
 		if response is not None and response.text is not None:
 			self.host_plugin.logger.debug(to_unicode(response.text))
 			
-	#-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+	# -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 	# This routine will handle notification to the device whenever a file was successfully
 	# downloaded via a DOWNLOAD_FILE or DOWNLOAD_IMAGE command
-	#-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+	# -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 	def notify_successful_download(self, rp_command, output_file_name):
 		pass
 	
