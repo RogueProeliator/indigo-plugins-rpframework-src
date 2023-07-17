@@ -1,23 +1,18 @@
 #! /usr/bin/env python
 # -*- coding: utf-8 -*-
-#/////////////////////////////////////////////////////////////////////////////////////////
+#######################################################################################
 # RPFrameworkThread by RogueProeliator <adam.d.ashe@gmail.com>
-# 	Class for all RogueProeliator's device threads; supports cancellation via raising an
-#	exception in the thread
-#/////////////////////////////////////////////////////////////////////////////////////////
+# Class for all RogueProeliator's device threads; supports cancellation via raising an
+# exception in the thread
+#######################################################################################
 
-#/////////////////////////////////////////////////////////////////////////////////////////
-#region Python Imports
+# region Python Imports
 import ctypes
 import inspect
 import threading
-#endregion
-#/////////////////////////////////////////////////////////////////////////////////////////
+# endregion
 
 
-#/////////////////////////////////////////////////////////////////////////////////////////
-# Internal module-level function used to send an exception to a given thread
-#/////////////////////////////////////////////////////////////////////////////////////////
 def _async_raise(tid, exctype):
 	if not inspect.isclass(exctype):
 		raise TypeError("Only types can be raised (not instances)")
@@ -31,18 +26,18 @@ def _async_raise(tid, exctype):
 		raise SystemError("PyThreadState_SetAsyncExc failed")
 
 
-#/////////////////////////////////////////////////////////////////////////////////////////
+#######################################################################################
 # RPFrameworkThread
-#	Base threading class used to launch extra processing threads by plugins and devices
-#/////////////////////////////////////////////////////////////////////////////////////////
+# Base threading class used to launch extra processing threads by plugins and devices
+#######################################################################################
 class RPFrameworkThread(threading.Thread):
 
-	#-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+	# -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 	# This routine returns the ID of the thread, which should be unique to all threads
 	# in this package
-	#-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+	# -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 	def _get_my_tid(self):
-		if not self.isAlive():
+		if not self.is_alive():
 			raise threading.ThreadError("The thread is not active")
 
 		# check to see if we have the ID already retrieved/cached
@@ -51,22 +46,22 @@ class RPFrameworkThread(threading.Thread):
 
 		# the id is not yet cached to the class... attempt to find it now in the list
 		# of active threads
-		for tid, tobj in threading._active.items():
-			if tobj is self:
-				self._thread_id = tid
-				return tid
+		for t in threading.enumerate():
+			if t is self:
+				self._thread_id = t.native_id
+				return t.native_id
 
 		# we could not find the thread's ID
 		raise AssertionError("Could not determine the thread's id")
 
-	#-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+	# -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 	# This routine raises an exception of the given type within the thread's context
-	#-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+	# -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 	def raise_exc(self, exctype):
 		_async_raise(self._get_my_tid(), exctype)
 
-	#-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+	# -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 	# This routine may be called in order to terminate the thread
-	#-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+	# -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 	def terminateThread(self):
 		self.raise_exc(SystemExit)

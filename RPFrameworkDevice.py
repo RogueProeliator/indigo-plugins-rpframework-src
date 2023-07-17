@@ -132,7 +132,7 @@ class RPFrameworkDevice(object):
 		
 		# if connection to the device has not started, or has timed out, then start up a
 		# concurrent thread to handle communications
-		if self.concurrent_thread is None or self.concurrent_thread.isAlive() == False:
+		if self.concurrent_thread is None or not self.concurrent_thread.is_alive():
 			self.concurrent_thread = RPFrameworkThread(target=functools.partial(self.concurrent_command_processing_thread, self.command_queue))
 			self.concurrent_thread.start()
 			
