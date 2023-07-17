@@ -288,7 +288,7 @@ class RPFrameworkPlugin(indigo.PluginBase):
 								if command_repeat_delay_node is not None:
 									command_repeat_delay = to_unicode(command_repeat_delay_node.text)
 
-								rp_action.addIndigoCommand(to_unicode(command_name_node.text), to_unicode(command_format_string_node.text), command_repeat_count, command_repeat_delay, command_execute_condition)
+								rp_action.add_indigo_command(to_unicode(command_name_node.text), to_unicode(command_format_string_node.text), command_repeat_count, command_repeat_delay, command_execute_condition)
 
 						params_node = managedAction.find("params")
 						if params_node is not None:
@@ -296,7 +296,7 @@ class RPFrameworkPlugin(indigo.PluginBase):
 							for actionParam in params_node.findall("param"):
 								rp_param = self.read_indigo_param_node(actionParam)
 								self.logger.threaddebug(f"Created parameter for managed action '{rp_action.indigoActionId}': {rp_param.indigo_id}")
-								rp_action.addIndigoParameter(rp_param)
+								rp_action.add_indigo_parameter(rp_param)
 						self.add_indigo_action(rp_action)
 				self.logger.debug("Successfully completed processing of RPFrameworkConfig.xml file")
 			except Exception as err:
@@ -684,7 +684,7 @@ class RPFrameworkPlugin(indigo.PluginBase):
 		self.logger.threaddebug(f"Call to validate action: {typeId}")
 		if typeId in self.indigo_actions:
 			action_defn = self.indigo_actions[typeId]
-			managed_action_validation = action_defn.validateActionValues(valuesDict)
+			managed_action_validation = action_defn.validate_action_values(valuesDict)
 			if not managed_action_validation[0]:
 				self.logger.threaddebug(f"Managed validation failed: {managed_action_validation[1]}{managed_action_validation[2]}")
 			return managed_action_validation
@@ -811,7 +811,7 @@ class RPFrameworkPlugin(indigo.PluginBase):
 
 		# if execution made it this far then we have the action & device and can execute
 		# that action now...
-		self.indigo_actions[indigoActionId].generateActionCommands(self, self.managed_devices[indigoDeviceId], paramValues)
+		self.indigo_actions[indigoActionId].generate_action_commands(self, self.managed_devices[indigoDeviceId], paramValues)
 
 	# -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 	# This routine will toggled the debug setting on all devices managed... it is used to
