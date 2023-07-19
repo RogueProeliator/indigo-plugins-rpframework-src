@@ -112,7 +112,7 @@ class RPFrameworkDevice(object):
 	# -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 	def terminate_communications(self):
 		self.host_plugin.logger.debug(f"Initiating shutdown of communications with {self.indigoDevice.name}")
-		if not (self.concurrent_thread is None) and self.concurrent_thread.isAlive():
+		if not (self.concurrent_thread is None) and self.concurrent_thread.is_alive():
 			self.concurrent_thread.terminateThread()
 			self.concurrent_thread.join()
 		self.concurrent_thread = None
