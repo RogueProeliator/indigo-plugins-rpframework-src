@@ -48,8 +48,8 @@ class RPFrameworkThread(threading.Thread):
 		# of active threads
 		for t in threading.enumerate():
 			if t is self:
-				self._thread_id = t.native_id
-				return t.native_id
+				self._thread_id = t.ident
+				return t.ident
 
 		# we could not find the thread's ID
 		raise AssertionError("Could not determine the thread's id")

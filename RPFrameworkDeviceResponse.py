@@ -161,7 +161,7 @@ class RPFrameworkDeviceResponse(object):
 				elif effect.effect_type == RPFrameworkDeviceResponse.RESPONSE_EFFECT_CALLBACK:
 					# this should kick off a callback to a python call on the device...
 					rp_plugin.logger.debug(f"Effect execution: Calling function {effect.update_param}")
-					eval(f"rpDevice.{effect.update_param}(responseObj, rpCommand)")
+					eval(f"rp_device.{effect.update_param}(response_obj, rp_command)")
 			except:
 				rp_plugin.logger.exception(f"Error executing effect for device id {rp_device.indigoDevice.id}")
 
