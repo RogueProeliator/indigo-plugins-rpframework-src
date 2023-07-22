@@ -1,13 +1,12 @@
 #! /usr/bin/env python
 # -*- coding: utf-8 -*-
-#/////////////////////////////////////////////////////////////////////////////////////////
+#######################################################################################
 # RPFrameworkTelnetDevice by RogueProeliator <adam.d.ashe@gmail.com>
-# 	This class is a concrete implementation of the RPFrameworkDevice as a device which
-#	communicates via a telnet session
-#/////////////////////////////////////////////////////////////////////////////////////////
+# This class is a concrete implementation of the RPFrameworkDevice as a device which
+# communicates via a telnet session
+#######################################################################################
 
-#/////////////////////////////////////////////////////////////////////////////////////////
-#region Python Imports
+# region Python Imports
 import re
 import socket
 import telnetlib
@@ -20,21 +19,13 @@ except:
 
 from .RPFrameworkCommand import RPFrameworkCommand
 from .RPFrameworkDevice  import RPFrameworkDevice
-from .RPFrameworkUtils   import to_unicode
-
-#endregion
-#/////////////////////////////////////////////////////////////////////////////////////////
+# endregion
 
 
-#/////////////////////////////////////////////////////////////////////////////////////////
-# RPFrameworkTelnetDevice
-#	This class is a concrete implementation of the RPFrameworkDevice as a device which
-#	communicates via a telnet session
-#/////////////////////////////////////////////////////////////////////////////////////////
 class RPFrameworkTelnetDevice(RPFrameworkDevice):
 
-	#/////////////////////////////////////////////////////////////////////////////////////////
-	#region Constants and Configuration Variables
+	#######################################################################################
+	# region Constants and Configuration Variables
 	CONNECTIONTYPE_TELNET = 1
 	CONNECTIONTYPE_SERIAL = 2
 	CONNECTIONTYPE_SOCKET = 3
@@ -63,43 +54,43 @@ class RPFrameworkTelnetDevice(RPFrameworkDevice):
 
 	CMD_WRITE_TO_DEVICE = "writeToTelnetConn"
 
-	#endregion
-	#/////////////////////////////////////////////////////////////////////////////////////////
+	# endregion
+	#######################################################################################
 	
-	#/////////////////////////////////////////////////////////////////////////////////////
-	#region Construction and Destruction Methods
-	#-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+	#######################################################################################
+	# region Construction and Destruction Methods
+	# -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 	# Constructor called once upon plugin class receiving a command to start device
 	# communication. Defers to the base class for processing but initializes params
-	#-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+	# -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 	def __init__(self, plugin, device, connection_type=CONNECTIONTYPE_TELNET):
 		super().__init__(plugin, device)
 		self.connection_type = connection_type
 
-	#endregion
-	#/////////////////////////////////////////////////////////////////////////////////////
+	# endregion
+	#######################################################################################
 		
-	#/////////////////////////////////////////////////////////////////////////////////////
-	#region Processing and Command Functions
-	#-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+	#######################################################################################
+	# region Processing and Command Functions
+	# -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 	# This routine is designed to run in a concurrent thread and will continuously monitor
 	# the commands queue for work to do.
-	#-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-	def concurrent_command_processing_thread(self, commandQueue):
+	# -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+	def concurrent_command_processing_thread(self, command_queue):
 		try:
 			# retrieve the keys and settings that will be used during the command processing
 			# for this telnet device
 			is_connected_state_key = self.host_plugin.get_gui_config_value(self.indigoDevice.deviceTypeId, RPFrameworkTelnetDevice.GUI_CONFIG_ISCONNECTEDSTATEKEY, "")
 			connection_state_key   = self.host_plugin.get_gui_config_value(self.indigoDevice.deviceTypeId, RPFrameworkTelnetDevice.GUI_CONFIG_CONNECTIONSTATEKEY, "")
 			self.host_plugin.logger.threaddebug(f"Read device state config... isConnected: {is_connected_state_key}; connectionState: {connection_state_key}")
-			telnet_connection_info = self.getDeviceAddressInfo()
+			telnet_connection_info = self.get_device_address_info()
 		
 			# establish the telnet connection to the telnet-based which handles the primary
 			# network remote operations
 			self.host_plugin.logger.debug(f"Establishing connection to {telnet_connection_info[0]}")
-			ip_connection                   = self.establishDeviceConnection(telnet_connection_info)
+			ip_connection                   = self.establish_device_connection(telnet_connection_info)
 			self.failed_connection_attempts = 0
-			self.host_plugin.logger.debug(f"Connection established")
+			self.host_plugin.logger.debug("Connection established")
 			
 			# update the states on the server to show that we have established a connectionStateKey
 			self.indigoDevice.setErrorStateOnServer(None)
@@ -115,7 +106,7 @@ class RPFrameworkTelnetDevice(RPFrameworkDevice):
 			command_response_timeout          = float(self.host_plugin.get_gui_config_value(self.indigoDevice.deviceTypeId, RPFrameworkTelnetDevice.GUI_CONFIG_COMMANDREADTIMEOUT, "0.5"))
 			
 			telnet_connection_requires_login_dp = self.host_plugin.get_gui_config_value(self.indigoDevice.deviceTypeId, RPFrameworkTelnetDevice.GUI_CONFIG_REQUIRES_LOGIN_DP, "")
-			telnet_connection_requires_login    = (to_unicode(self.indigoDevice.pluginProps.get(telnet_connection_requires_login_dp, "False")).lower() == "true")
+			telnet_connection_requires_login    = (f"{self.indigoDevice.pluginProps.get(telnet_connection_requires_login_dp, 'False')}".lower() == "true")
 			
 			update_status_poller_property_name  = self.host_plugin.get_gui_config_value(self.indigoDevice.deviceTypeId, RPFrameworkTelnetDevice.GUI_CONFIG_STATUSPOLL_INTERVALPROPERTY, "updateInterval")
 			update_status_poller_interval       = int(self.indigoDevice.pluginProps.get(update_status_poller_property_name, "90"))
@@ -130,14 +121,14 @@ class RPFrameworkTelnetDevice(RPFrameworkDevice):
 			last_queued_command_completed = 0
 			while continue_processing_commands:
 				# process pending commands now...
-				while not commandQueue.empty():
-					len_queue = commandQueue.qsize()
+				while not command_queue.empty():
+					len_queue = command_queue.qsize()
 					self.host_plugin.logger.threaddebug(f"Command queue has {len_queue} command(s) waiting")
 					
 					# the command name will identify what action should be taken... we will handle the known
 					# commands and dispatch out to the device implementation, if necessary, to handle unknown
 					# commands
-					command = commandQueue.get()
+					command = command_queue.get()
 					if command.command_name == RPFrameworkCommand.CMD_INITIALIZE_CONNECTION:
 						# specialized command to instantiate the thread/telnet connection
 						# safely ignore this... just used to spin up the thread
@@ -146,7 +137,7 @@ class RPFrameworkTelnetDevice(RPFrameworkDevice):
 						# if the device supports polling for status, it may be initiated here now that
 						# the connection has been established; no additional command will come through
 						if not telnet_connection_requires_login:
-							commandQueue.put(RPFrameworkCommand(RPFrameworkCommand.CMD_UPDATE_DEVICE_STATUS_FULL, parent_action=update_status_poller_action_id))
+							command_queue.put(RPFrameworkCommand(RPFrameworkCommand.CMD_UPDATE_DEVICE_STATUS_FULL, parent_action=update_status_poller_action_id))
 						
 					elif command.command_name == RPFrameworkCommand.CMD_TERMINATE_PROCESSING_THREAD:
 						# a specialized command designed to stop the processing thread indigo
@@ -184,7 +175,7 @@ class RPFrameworkTelnetDevice(RPFrameworkDevice):
 							# the new device state may include an eval statement...
 							update_state_name  = new_state_info.group(1)
 							update_state_value = new_state_info.group(2)
-							if update_state_value.startswith(u'eval'):
+							if update_state_value.startswith("eval"):
 								update_state_value = eval(update_state_value.replace("eval:", ""))
 							
 							self.host_plugin.logger.debug(f"Updating state '{update_state_name}' to: '{update_state_value}'")
@@ -200,13 +191,13 @@ class RPFrameworkTelnetDevice(RPFrameworkDevice):
 					else:
 						# this is an unknown command; dispatch it to another routine which is
 						# able to handle the commands (to be overridden for individual devices)
-						self.handleUnmanagedCommandInQueue(ip_connection, command)
+						self.handle_unmanaged_command_in_queue(ip_connection, command)
 						
 					# determine if any response has been received from the telnet device...
-					response_text = f"{self.readLine(ip_connection, line_ending_token, command_response_timeout)}"
+					response_text = f"{self.read_line(ip_connection, line_ending_token, command_response_timeout)}"
 					if response_text != "":
 						self.host_plugin.logger.threaddebug(f"Received: {response_text}")
-						self.handleDeviceResponse(response_text.replace(line_ending_token, ""), command)
+						self.handle_device_response(response_text.replace(line_ending_token, ""), command)
 						
 					# if the command has a pause defined for after it is completed then we
 					# should execute that pause now
@@ -216,17 +207,17 @@ class RPFrameworkTelnetDevice(RPFrameworkDevice):
 					
 					# complete the de-queuing of the command, allowing the next
 					# command in queue to rise to the top
-					commandQueue.task_done()
+					command_queue.task_done()
 					last_queued_command_completed = empty_queue_reduced_wait_cycles
 					
 				# continue with empty-queue processing unless the connection is shutting down...
 				if continue_processing_commands:
 					# check for any pending data coming IN from the telnet connection; note this is after the
 					# command queue has been emptied, so it may be un-prompted incoming data
-					response_text = f"{self.readIfAvailable(ip_connection, line_ending_token, command_response_timeout)}"
+					response_text = f"{self.read_if_available(ip_connection, line_ending_token, command_response_timeout)}"
 					if response_text != "":
 						self.host_plugin.logger.threaddebug(f"Received w/o Command: {response_text}")
-						self.handleDeviceResponse(response_text.replace(line_ending_token, ""), None)
+						self.handle_device_response(response_text.replace(line_ending_token, ""), None)
 				
 					# when the queue is empty, pause a bit on each iteration
 					if last_queued_command_completed > 0:
@@ -237,7 +228,7 @@ class RPFrameworkTelnetDevice(RPFrameworkDevice):
 				
 					# check to see if we need to issue an update...
 					if update_status_poller_next_run is not None and time.time() > update_status_poller_next_run:
-						commandQueue.put(RPFrameworkCommand(RPFrameworkCommand.CMD_UPDATE_DEVICE_STATUS_FULL, parent_action=update_status_poller_action_id))
+						command_queue.put(RPFrameworkCommand(RPFrameworkCommand.CMD_UPDATE_DEVICE_STATUS_FULL, parent_action=update_status_poller_action_id))
 				
 		# handle any exceptions that are thrown during execution of the plugin... note that this
 		# should terminate the thread, but it may get spun back up again
@@ -265,7 +256,7 @@ class RPFrameworkTelnetDevice(RPFrameworkDevice):
 			# this is a standard socket error, such as a reset... we can attempt to recover from this with
 			# a scheduled reconnect
 			if self.failed_connection_attempts == 0 or self.host_plugin.debug:
-				self.host_plugin.logg.error(f"Connection failed for device {self.indigoDevice.id}: {e}")
+				self.host_plugin.logger.error(f"Connection failed for device {self.indigoDevice.id}: {e}")
 
 			if connection_state_key != "":
 				self.indigoDevice.updateStateOnServer(key=connection_state_key, value="Unavailable")
@@ -292,11 +283,11 @@ class RPFrameworkTelnetDevice(RPFrameworkDevice):
 				ip_connection.close()
 				ip_connection = None
 
-	#-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+	# -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 	# This routine should return a tuple of information about the connection - in the
 	# format of (ipAddress/HostName, portNumber)
-	#-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-	def getDeviceAddressInfo(self):
+	# -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+	def get_device_address_info(self):
 		if self.connection_type == RPFrameworkTelnetDevice.CONNECTIONTYPE_TELNET:
 			return "", 0
 		else:
@@ -309,11 +300,11 @@ class RPFrameworkTelnetDevice(RPFrameworkDevice):
 			write_timeout = float(self.host_plugin.substitute_indigo_values(self.host_plugin.get_gui_config_value(self.indigoDevice.deviceTypeId, RPFrameworkTelnetDevice.GUI_CONFIG_SERIALPORT_WRITETIMEOUT, '1.0'), self, None))
 			return port_name, (baud_rate, parity, byte_size, stop_bits, timeout, write_timeout)
 		
-	#-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+	# -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 	# This routine should return a tuple of information about the connection - in the
 	# format of (ipAddress/HostName, portNumber)
-	#-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-	def establishDeviceConnection(self, connection_info):
+	# -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+	def establish_device_connection(self, connection_info):
 		if self.connection_type == RPFrameworkTelnetDevice.CONNECTIONTYPE_TELNET:
 			return telnetlib.Telnet(connection_info[0], connection_info[1])
 		elif self.connection_type == RPFrameworkTelnetDevice.CONNECTIONTYPE_SERIAL:
@@ -327,61 +318,58 @@ class RPFrameworkTelnetDevice(RPFrameworkDevice):
 		else:
 			raise "Invalid connection type specified"
 		
-	#-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+	# -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 	# This routine should be overridden in individual device classes whenever they must
 	# handle custom commands that are not already defined
-	#-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-	def handleUnmanagedCommandInQueue(self, ipConnection, rpCommand):
+	# -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+	def handle_unmanaged_command_in_queue(self, ip_connection, rp_command):
 		pass
 		
-	#-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+	# -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 	# This routine should attempt to read a line of text from the connection, using the
 	# provided timeout as the upper-limit to wait
-	#-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-	def readLine(self, connection, lineEndingToken, commandResponseTimeout):
+	# -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+	def read_line(self, connection, line_ending_token, command_response_timeout):
 		if self.connection_type == RPFrameworkTelnetDevice.CONNECTIONTYPE_TELNET:
-			return to_unicode(connection.read_until(lineEndingToken, commandResponseTimeout))
+			return connection.read_until(line_ending_token, command_response_timeout)
 		elif self.connection_type == RPFrameworkTelnetDevice.CONNECTIONTYPE_SERIAL:
-			# Python 2.6 changed the readline signature to not include a line-ending token,
-			# so we have to "manually" re-create that here
-			#return connection.readline(None)
 			line_read = ""
-			line_ending_token_len = len(lineEndingToken)
+			line_ending_token_len = len(line_ending_token)
 			while True:
 				c = connection.read(1)
 				if c:
 					line_read += c
-					if line_read[-line_ending_token_len:] == lineEndingToken:
+					if line_read[-line_ending_token_len:] == line_ending_token:
 						break
 				else:
 					break
-			return to_unicode(line_read)
+			return line_read
 			
-	#-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+	# -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 	# This routine should attempt to read a line of text from the connection only if there
 	# is an indication of waiting data (there is no waiting until a specified timeout)
-	#-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-	def readIfAvailable(self, connection, lineEndingToken, commandResponseTimeout):
+	# -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+	def read_if_available(self, connection, line_ending_token, command_response_timeout):
 		if self.connection_type == RPFrameworkTelnetDevice.CONNECTIONTYPE_TELNET:
-			return to_unicode(connection.read_eager())
+			return connection.read_eager()
 		elif connection.inWaiting() > 0:
-			return to_unicode(self.readLine(connection, lineEndingToken, commandResponseTimeout))
+			return self.read_line(connection, line_ending_token, command_response_timeout)
 		else:
 			return ""
 		
-	#-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+	# -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 	# This routine will process any response from the device following the list of
 	# response objects defined for this device type. For telnet this will always be
 	# a text string
-	#-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-	def handleDeviceResponse(self, responseText, rpCommand):
+	# -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+	def handle_device_response(self, response_text, rp_command):
 		# loop through the list of response definitions defined in the (base) class
 		# and determine if any match
 		for rpResponse in self.host_plugin.get_device_response_definitions(self.indigoDevice.deviceTypeId):
-			if rpResponse.is_response_match(responseText, rpCommand, self, self.host_plugin):
+			if rpResponse.is_response_match(response_text, rp_command, self, self.host_plugin):
 				self.host_plugin.logger.threaddebug(f"Found response match: {rpResponse.response_id}")
-				rpResponse.execute_effects(responseText, rpCommand, self, self.host_plugin)
+				rpResponse.execute_effects(response_text, rp_command, self, self.host_plugin)
 
-	#endregion
-	#/////////////////////////////////////////////////////////////////////////////////////	
+	# endregion
+	#######################################################################################
 		
