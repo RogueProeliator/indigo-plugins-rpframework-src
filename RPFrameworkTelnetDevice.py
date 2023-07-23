@@ -8,6 +8,7 @@
 
 # region Python Imports
 import re
+import serial
 import socket
 import telnetlib
 import time
@@ -336,7 +337,7 @@ class RPFrameworkTelnetDevice(RPFrameworkDevice):
 			line_read = ""
 			line_ending_token_len = len(line_ending_token)
 			while True:
-				c = connection.read(1)
+				c = str(connection.read(1))
 				if c:
 					line_read += c
 					if line_read[-line_ending_token_len:] == line_ending_token:
