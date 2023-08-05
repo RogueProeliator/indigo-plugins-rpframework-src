@@ -348,17 +348,8 @@ class RPFrameworkTelnetDevice(RPFrameworkDevice):
 		if self.connection_type == RPFrameworkTelnetDevice.CONNECTIONTYPE_TELNET:
 			return connection.read_until(line_ending_token, command_response_timeout)
 		elif self.connection_type == RPFrameworkTelnetDevice.CONNECTIONTYPE_SERIAL:
-			line_read = ""
-			line_ending_token_len = len(line_ending_token)
-			while True:
-				c = str(connection.read(1))
-				if c:
-					line_read += c
-					if line_read[-line_ending_token_len:] == line_ending_token:
-						break
-				else:
-					break
-			return line_read
+			connection.timeout = command_response_timeout
+			return connection.read_until(line_ending_token)
 			
 	# -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 	# This routine should attempt to read a line of text from the connection only if there
@@ -367,7 +358,7 @@ class RPFrameworkTelnetDevice(RPFrameworkDevice):
 	def read_if_available(self, connection, line_ending_token, command_response_timeout):
 		if self.connection_type == RPFrameworkTelnetDevice.CONNECTIONTYPE_TELNET:
 			return connection.read_eager()
-		elif connection.inWaiting() > 0:
+		elif connection.in_waiting > 0:
 			return self.read_line(connection, line_ending_token, command_response_timeout)
 		else:
 			return ""
