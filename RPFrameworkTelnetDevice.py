@@ -85,24 +85,14 @@ class RPFrameworkTelnetDevice(RPFrameworkDevice):
 			connection_state_key   = self.host_plugin.get_gui_config_value(self.indigoDevice.deviceTypeId, RPFrameworkTelnetDevice.GUI_CONFIG_CONNECTIONSTATEKEY, "")
 			self.host_plugin.logger.threaddebug(f"Read device state config... isConnected: {is_connected_state_key}; connectionState: {connection_state_key}")
 			telnet_connection_info = self.get_device_address_info()
-		
-			# establish the telnet connection to the telnet-based which handles the primary
-			# network remote operations
-			self.host_plugin.logger.debug(f"Establishing connection to {telnet_connection_info[0]}")
-			ip_connection = self.establish_device_connection(telnet_connection_info)
-			if ip_connection is None:
-				# this may return None instead of throwing an error for serial devices... throw the equivalent
-				# error to allow the reconnection attempt
-				raise EOFError()
-			self.failed_connection_attempts = 0
-			self.host_plugin.logger.debug("Connection established")
-			
-			# update the states on the server to show that we have established a connectionStateKey
-			self.indigoDevice.setErrorStateOnServer(None)
-			if is_connected_state_key != "":
-				self.indigoDevice.updateStateOnServer(key=is_connected_state_key, value="true")
-			if connection_state_key != "":
-				self.indigoDevice.updateStateOnServer(key=connection_state_key, value="Connected")
+
+			# start with a clean slate if this is the first time we are attempting connection
+			if self.failed_connection_attempts == 0:
+				self.indigoDevice.setErrorStateOnServer(None)
+				if is_connected_state_key != "":
+					self.indigoDevice.updateStateOnServer(key=is_connected_state_key, value="false")
+				if connection_state_key != "":
+					self.indigoDevice.updateStateOnServer(key=connection_state_key, value="Not Connected")
 				
 			# retrieve any configuration information that may have been set up in the
 			# plugin configuration and/or device configuration	
@@ -136,13 +126,33 @@ class RPFrameworkTelnetDevice(RPFrameworkDevice):
 					command = command_queue.get()
 					if command.command_name == RPFrameworkCommand.CMD_INITIALIZE_CONNECTION:
 						# specialized command to instantiate the thread/telnet connection
-						# safely ignore this... just used to spin up the thread
 						self.host_plugin.logger.threaddebug("Create connection command de-queued")
+
+						# establish the telnet connection to the telnet-based which handles the primary
+						# network remote operations
+						self.host_plugin.logger.debug(f"Establishing connection to {telnet_connection_info[0]}")
+						ip_connection = self.establish_device_connection(telnet_connection_info)
+						if ip_connection is None:
+							# this may return None instead of throwing an error for serial devices... throw the equivalent
+							# error to allow the reconnection attempt
+							raise EOFError()
+						self.failed_connection_attempts = 0
+						self.host_plugin.logger.debug("Connection established")
+
+						# update the states on the server to show that we have established a connectionStateKey
+						self.indigoDevice.setErrorStateOnServer(None)
+						if is_connected_state_key != "":
+							self.indigoDevice.updateStateOnServer(key=is_connected_state_key, value="true")
+						if connection_state_key != "":
+							self.indigoDevice.updateStateOnServer(key=connection_state_key, value="Connected")
 						
 						# if the device supports polling for status, it may be initiated here now that
 						# the connection has been established; no additional command will come through
 						if not telnet_connection_requires_login:
+							self.host_plugin.logger.threaddebug("No login required, scheduling status update")
 							command_queue.put(RPFrameworkCommand(RPFrameworkCommand.CMD_UPDATE_DEVICE_STATUS_FULL, parent_action=update_status_poller_action_id))
+						else:
+							self.host_plugin.logger.threaddebug("Login required, skipping status poll command for now")
 						
 					elif command.command_name == RPFrameworkCommand.CMD_TERMINATE_PROCESSING_THREAD:
 						# a specialized command designed to stop the processing thread indigo
