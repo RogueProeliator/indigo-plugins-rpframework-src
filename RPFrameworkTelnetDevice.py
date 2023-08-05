@@ -40,6 +40,7 @@ class RPFrameworkTelnetDevice(RPFrameworkDevice):
 	GUI_CONFIG_REQUIRES_LOGIN_DP           = "telnetConnectionRequiresLoginProperty"
 	GUI_CONFIG_STATUSPOLL_INTERVALPROPERTY = "updateStatusPollerIntervalProperty"
 	GUI_CONFIG_STATUSPOLL_ACTIONID         = "updateStatusPollerActionId"
+	GUI_CONFIG_STATUSPOLL_INITIALDELAY     = "updateStatusPollInitialDelay"
 
 	GUI_CONFIG_SERIALPORT_PORTNAME         = "serialPortName"
 	GUI_CONFIG_SERIALPORT_BAUDRATE         = "serialPortBaud"
@@ -107,7 +108,8 @@ class RPFrameworkTelnetDevice(RPFrameworkDevice):
 			update_status_poller_interval       = int(self.indigoDevice.pluginProps.get(update_status_poller_property_name, "90"))
 			update_status_poller_next_run       = None
 			update_status_poller_action_id      = self.host_plugin.get_gui_config_value(self.indigoDevice.deviceTypeId, RPFrameworkTelnetDevice.GUI_CONFIG_STATUSPOLL_ACTIONID, "")
-			
+			update_status_poller_initial_delay  = float(self.host_plugin.get_gui_config_value(self.indigoDevice.deviceTypeId, RPFrameworkTelnetDevice.GUI_CONFIG_STATUSPOLL_INITIALDELAY, "0.5"))
+
 			empty_queue_reduced_wait_cycles     = int(self.host_plugin.get_gui_config_value(self.indigoDevice.deviceTypeId, RPFrameworkTelnetDevice.GUI_CONFIG_TELNETDEV_EMPTYQUEUE_SPEEDUPCYCLES, "200"))
 			
 			# begin the infinite loop which will run as long as the queue contains commands
@@ -150,6 +152,7 @@ class RPFrameworkTelnetDevice(RPFrameworkDevice):
 						# the connection has been established; no additional command will come through
 						if not telnet_connection_requires_login:
 							self.host_plugin.logger.threaddebug("No login required, scheduling status update")
+							command.post_command_pause = update_status_poller_initial_delay
 							command_queue.put(RPFrameworkCommand(RPFrameworkCommand.CMD_UPDATE_DEVICE_STATUS_FULL, parent_action=update_status_poller_action_id))
 						else:
 							self.host_plugin.logger.threaddebug("Login required, skipping status poll command for now")
