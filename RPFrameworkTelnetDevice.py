@@ -89,7 +89,11 @@ class RPFrameworkTelnetDevice(RPFrameworkDevice):
 			# establish the telnet connection to the telnet-based which handles the primary
 			# network remote operations
 			self.host_plugin.logger.debug(f"Establishing connection to {telnet_connection_info[0]}")
-			ip_connection                   = self.establish_device_connection(telnet_connection_info)
+			ip_connection = self.establish_device_connection(telnet_connection_info)
+			if ip_connection is None:
+				# this may return None instead of throwing an error for serial devices... throw the equivalent
+				# error to allow the reconnection attempt
+				raise EOFError()
 			self.failed_connection_attempts = 0
 			self.host_plugin.logger.debug("Connection established")
 			
