@@ -212,7 +212,7 @@ class RPFrameworkTelnetDevice(RPFrameworkDevice):
 						self.handle_unmanaged_command_in_queue(ip_connection, command)
 						
 					# determine if any response has been received from the telnet device...
-					response_text = f"{self.read_line(ip_connection, line_ending_token, command_response_timeout)}"
+					response_text = self.read_line(ip_connection, line_ending_token, command_response_timeout)
 					if response_text != "":
 						self.host_plugin.logger.threaddebug(f"Received: {response_text}")
 						self.handle_device_response(response_text.replace(line_ending_token, ""), command)
@@ -232,7 +232,7 @@ class RPFrameworkTelnetDevice(RPFrameworkDevice):
 				if continue_processing_commands:
 					# check for any pending data coming IN from the telnet connection; note this is after the
 					# command queue has been emptied, so it may be un-prompted incoming data
-					response_text = f"{self.read_if_available(ip_connection, line_ending_token, command_response_timeout)}"
+					response_text = self.read_if_available(ip_connection, line_ending_token, command_response_timeout)
 					if response_text != "":
 						self.host_plugin.logger.threaddebug(f"Received w/o Command: {response_text}")
 						self.handle_device_response(response_text.replace(line_ending_token, ""), None)
@@ -352,7 +352,7 @@ class RPFrameworkTelnetDevice(RPFrameworkDevice):
 			return connection.read_until(line_ending_token, command_response_timeout)
 		elif self.connection_type == RPFrameworkTelnetDevice.CONNECTIONTYPE_SERIAL:
 			connection.timeout = command_response_timeout
-			return connection.read_until(line_ending_token)
+			return connection.read_until(line_ending_token).decode()
 			
 	# -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 	# This routine should attempt to read a line of text from the connection only if there
@@ -362,7 +362,7 @@ class RPFrameworkTelnetDevice(RPFrameworkDevice):
 		if self.connection_type == RPFrameworkTelnetDevice.CONNECTIONTYPE_TELNET:
 			return connection.read_eager()
 		elif connection.in_waiting > 0:
-			return self.read_line(connection, line_ending_token, command_response_timeout)
+			return self.read_line(connection, line_ending_token, command_response_timeout).decode()
 		else:
 			return ""
 		

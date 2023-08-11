@@ -73,7 +73,7 @@ class RPFrameworkDeviceResponse(object):
 				return self.respond_to_action_id == rp_command.parent_action
 			else:
 				return self.respond_to_action_id == rp_command.parent_action.indigoActionId
-				
+
 		match_criteria_test = self.substitute_criteria_format_string(self.criteria_format_string, response_obj, rp_command, rp_device, rp_plugin)
 		match_obj           = re.match(self.match_expression, match_criteria_test, re.I)
 		return (match_obj is not None) and (self.respond_to_action_id == "" or self.respond_to_action_id == rp_command.parent_action.indigoActionId)
