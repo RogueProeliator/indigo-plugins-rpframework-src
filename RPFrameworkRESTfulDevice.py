@@ -23,7 +23,7 @@ from   .RPFrameworkCommand       import RPFrameworkCommand
 from   .RPFrameworkDevice        import RPFrameworkDevice
 from   .RPFrameworkNetworkingWOL import sendWakeOnLAN
 from   .RPFrameworkUtils         import to_str
-from   .RPFrameworkUtils         import to_unicode
+from   .RPFrameworkPlugin        import  DEBUGLEVEL_LOW
 # endregion
 
 
@@ -316,7 +316,7 @@ class RPFrameworkRESTfulDevice(RPFrameworkDevice):
 						self.host_plugin.logger.threaddebug(f"Post Command Pause: {command.post_command_pause}")
 						time.sleep(command.post_command_pause)
 					
-					# complete the dequeuing of the command, allowing the next
+					# complete the de-queuing of the command, allowing the next
 					# command in queue to rise to the top
 					command_queue.task_done()
 					last_queued_command_completed = empty_queue_reduced_wait_cycles
@@ -386,13 +386,22 @@ class RPFrameworkRESTfulDevice(RPFrameworkDevice):
 	# descendant classes to do their own processing
 	# -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 	def handle_restful_error(self, rp_command, err, response=None):
+		error_message = ""
 		if rp_command.command_name == RPFrameworkRESTfulDevice.CMD_RESTFUL_PUT or rp_command.command_name == RPFrameworkRESTfulDevice.CMD_RESTFUL_GET:
-			self.host_plugin.logger.exception(f"An error occurred executing the GET/PUT request (Device: {self.indigoDevice.id}): {err}")
+			error_message = f"An error occurred executing the GET/PUT request (Device: {self.indigoDevice.id}): {err}"
 		else:
-			self.host_plugin.logger.exception(f"An error occurred processing the SOAP/JSON POST request: (Device: {self.indigoDevice.id}): {err}")
+			error_message = f"An error occurred processing the SOAP/JSON POST request: (Device: {self.indigoDevice.id}): {err}"
+
+		if self.host_plugin.debugLevel >= DEBUGLEVEL_LOW:
+			self.host_plugin.logger.exception(error_message)
+		elif rp_command is not None and rp_command.parent_action is not None and rp_command.parent_action.indigoActionId == self.host_plugin.get_gui_config_value(self.indigoDevice.deviceTypeId, RPFrameworkRESTfulDevice.GUI_CONFIG_RESTFULSTATUSPOLL_ACTIONID, "n-a"):
+			# this is a status update - no need to spam the log with errors
+			self.host_plugin.logger.debug(error_message)
+		else:
+			self.host_plugin.logger.error(error_message)
 			
 		if response is not None and response.text is not None:
-			self.host_plugin.logger.debug(to_unicode(response.text))
+			self.host_plugin.logger.debug(f"{response.text}")
 			
 	# -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 	# This routine will handle notification to the device whenever a file was successfully
