@@ -270,9 +270,9 @@ class RPFrameworkTelnetDevice(RPFrameworkDevice):
 				
 			# check to see if we should attempt reconnection
 			self.schedule_reconnection_attempt()
-		except socket.error as e:
-			# this is a standard socket error, such as a reset... we can attempt to recover from this with
-			# a scheduled reconnect
+		except (socket.error, UnboundLocalError) as e:
+			# standard socket error, such as a reset; UnboundLocalError is a socket going bad...
+			# we can attempt to recover from this with a scheduled reconnect
 			if self.failed_connection_attempts == 0 or self.host_plugin.debug:
 				self.host_plugin.logger.error(f"Connection failed for device {self.indigoDevice.id}: {e}")
 
