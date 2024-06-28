@@ -98,9 +98,9 @@ class RPFrameworkTelnetDevice(RPFrameworkDevice):
 				
 			# retrieve any configuration information that may have been set up in the
 			# plugin configuration and/or device configuration	
-			line_ending_token                 = self.host_plugin.get_gui_config_value(self.indigoDevice.deviceTypeId, RPFrameworkTelnetDevice.GUI_CONFIG_EOL, "\r")
-			self.line_encoding                = self.host_plugin.get_gui_config_value(self.indigoDevice.deviceTypeId, RPFrameworkTelnetDevice.GUI_CONFIG_SENDENCODING, "ascii")
-			command_response_timeout          = float(self.host_plugin.get_gui_config_value(self.indigoDevice.deviceTypeId, RPFrameworkTelnetDevice.GUI_CONFIG_COMMANDREADTIMEOUT, "0.5"))
+			self.line_encoding       = self.host_plugin.get_gui_config_value(self.indigoDevice.deviceTypeId, RPFrameworkTelnetDevice.GUI_CONFIG_SENDENCODING, "ascii")
+			line_ending_token        = self.host_plugin.get_gui_config_value(self.indigoDevice.deviceTypeId, RPFrameworkTelnetDevice.GUI_CONFIG_EOL, "\r")
+			command_response_timeout = float(self.host_plugin.get_gui_config_value(self.indigoDevice.deviceTypeId, RPFrameworkTelnetDevice.GUI_CONFIG_COMMANDREADTIMEOUT, "0.5"))
 			
 			telnet_connection_requires_login_dp = self.host_plugin.get_gui_config_value(self.indigoDevice.deviceTypeId, RPFrameworkTelnetDevice.GUI_CONFIG_REQUIRES_LOGIN_DP, "")
 			telnet_connection_requires_login    = (f"{self.indigoDevice.pluginProps.get(telnet_connection_requires_login_dp, 'False')}".lower() == "true")
@@ -350,10 +350,10 @@ class RPFrameworkTelnetDevice(RPFrameworkDevice):
 	# -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 	def read_line(self, connection, line_ending_token, command_response_timeout):
 		if self.connection_type == RPFrameworkTelnetDevice.CONNECTIONTYPE_TELNET:
-			return connection.read_until(line_ending_token, command_response_timeout).decode(self.line_encoding)
+			return connection.read_until(line_ending_token.encode(self.line_encoding), command_response_timeout).decode(self.line_encoding)
 		elif self.connection_type == RPFrameworkTelnetDevice.CONNECTIONTYPE_SERIAL:
 			connection.timeout = command_response_timeout
-			return connection.read_until(line_ending_token).decode(self.line_encoding)
+			return connection.read_until(line_ending_token.encode(self.line_encoding)).decode(self.line_encoding)
 			
 	# -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 	# This routine should attempt to read a line of text from the connection only if there
@@ -361,9 +361,9 @@ class RPFrameworkTelnetDevice(RPFrameworkDevice):
 	# -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 	def read_if_available(self, connection, line_ending_token, command_response_timeout):
 		if self.connection_type == RPFrameworkTelnetDevice.CONNECTIONTYPE_TELNET:
-			return connection.read_eager()
+			return connection.read_eager().decode(self.line_encoding)
 		elif connection.in_waiting > 0:
-			return self.read_line(connection, line_ending_token, command_response_timeout).decode(self.line_encoding)
+			return self.read_line(connection, line_ending_token.encode(self.line_encoding), command_response_timeout).decode(self.line_encoding)
 		else:
 			return ""
 		

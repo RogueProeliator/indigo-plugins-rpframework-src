@@ -9,6 +9,7 @@
 # region Python imports
 from __future__ import absolute_import
 import re
+import math
 
 try:
 	import indigo
@@ -122,7 +123,7 @@ class RPFrameworkDeviceResponse(object):
 					# this effect should update a device state (param) with a value as formatted
 					new_state_value_string = self.substitute_criteria_format_string(effect.update_value_format_string, response_obj, rp_command, rp_device, rp_plugin)
 					if effect.eval_update_value:
-						new_state_value = eval(new_state_value_string)
+						new_state_value = eval(new_state_value_string, {"math": math})
 					else:
 						new_state_value = new_state_value_string
 						
@@ -132,7 +133,7 @@ class RPFrameworkDeviceResponse(object):
 					if effect.update_value_format_ex_string != u"":
 						new_state_ui_value_string = self.substitute_criteria_format_string(effect.update_value_format_ex_string, response_obj, rp_command, rp_device, rp_plugin)
 						if effect.eval_update_value:
-							new_state_ui_value = eval(new_state_ui_value_string)
+							new_state_ui_value = eval(new_state_ui_value_string, {"math": math})
 						else:
 							new_state_ui_value = new_state_ui_value_string
 				
@@ -151,7 +152,7 @@ class RPFrameworkDeviceResponse(object):
 
 					queue_command_payload_str = self.substitute_criteria_format_string(effect.update_value_format_string, response_obj, rp_command, rp_device, rp_plugin)
 					if effect.eval_update_value:
-						queue_command_payload = eval(queue_command_payload_str)
+						queue_command_payload = eval(queue_command_payload_str, {"math": math})
 					else:
 						queue_command_payload = queue_command_payload_str
 				
